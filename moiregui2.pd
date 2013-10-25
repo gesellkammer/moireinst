@@ -1,0 +1,425 @@
+#N canvas 555 76 621 351 12;
+#X declare -lib cyclone;
+#X declare -lib iemlib;
+#X declare -path pd;
+#X text -12 -161 SPEED ANALYSIS WINDOW (ms);
+#X text 72 -131 SMOOTHING (ms);
+#X obj 180 -162 nbx 3 20 5 120 0 1 ui-speed-send ui-speed-recv empty
+0 -8 1 16 -262144 -39609 -1 36 256;
+#X obj 180 -131 nbx 3 20 1 100 0 1 ui-smooth-send ui-smooth-recv empty
+0 -8 1 16 -262144 -39609 -1 6 256;
+#X text 78 -100 MIN VARIATION;
+#X obj 180 -100 nbx 4 20 0 1 0 1 ui-minvar-send ui-minvar-recv empty
+0 -8 1 16 -262144 -39609 -1 0.2 100;
+#X floatatom 180 -63 5 0 800 0 - ui-measuredspeed-recv ui-measuredspeed-send
+;
+#X obj 130 -12 nbx 3 20 -90 0 0 1 ui-gate0-send ui-gate0-recv empty
+0 -8 1 16 -262144 -39609 -262144 -49 256;
+#X obj 130 17 nbx 3 20 -90 0 0 1 ui-gate1-send ui-gate1-recv empty
+0 -8 1 16 -262144 -39609 -262144 -17 256;
+#X obj 266 -145 hsl 128 12 0 1 0 0 _ vusource empty -2 -8 0 10 -33289
+-259948 -1 0 1;
+#X obj 267 -25 hsl 128 8 0 1 0 0 _ masterL empty -2 -8 0 10 -128992
+-4034 -1 0 1;
+#X obj 267 -17 hsl 128 8 0 1 0 0 _ masterR empty -2 -8 0 10 -128992
+-4034 -1 0 1;
+#X text 37 -64 MEASURED SPEED (Hz);
+#X floatatom 452 -152 5 -90 0 1 - ui-inputnb-recv ui-inputnb-send;
+#X obj 454 -29 nbx 4 20 -904 0 0 1 ui-mastergaindb-send ui-mastergaindb-recv
+empty 0 -8 1 16 -262144 -39609 -162280 0 256;
+#X text 263 -43 MASTER;
+#X floatatom 398 -28 5 0 0 0 - masterdb _;
+#X text 259 -164 INPUT;
+#X floatatom 359 -165 5 0 0 0 - vusourcedb _;
+#X obj 266 -94 hsl 128 8 0 1 0 0 _ vuanalogL empty -2 -8 0 10 -33289
+-4034 -1 0 1;
+#X obj 266 -86 hsl 128 8 0 1 0 0 _ vuanalogR empty -2 -8 0 10 -33289
+-4034 -1 0 1;
+#X obj 457 -95 hsl 128 8 0 1 0 0 _ v0post empty -2 -8 0 10 -33289 -126974
+-1 42 1;
+#X obj 457 -87 hsl 128 8 0 1 0 0 _ v1post empty -2 -8 0 10 -33289 -126974
+-1 2249 1;
+#X text 451 -112 DIG;
+#X text 261 -111 ANA;
+#X obj 410 -102 knob 32 32 0 1 0 0 ui-mix-send ui-mix-recv empty 0
+-8 0 8 -262144 -39609 -1 1658 1;
+#X obj 133 62 hsl 80 17 1 5 0 1 stereomagn-send stereomagn-recv empty
+-2 -8 0 10 -262144 -1 -1 1500 1;
+#X obj 133 89 hsl 80 17 0 100 0 1 ringmodboost-send ringmodboost-recv
+empty -2 -8 0 10 -262144 -1 -1 2400 1;
+#X floatatom 215 88 5 0 100 0 - ringmodboost-nb-recv _;
+#X floatatom 215 61 5 0 100 0 - stereomagn-nb-recv _;
+#X text 19 16 GATE THRESH dB;
+#X obj 491 -147 nbx 3 14 0.001 10 0 1 volcurve-send volcurve-recv curve
+0 -8 0 10 -262144 -39609 -39609 3.731 256;
+#X text -2 -40 __________________________________;
+#X text 2 -40 __________________________________;
+#X text 0 34 __________________________________;
+#X text 4 34 __________________________________;
+#X obj 334 18 cnv 15 90 90 empty empty empty 20 12 0 14 -162280 -66577
+0;
+#X obj 363 42 bng 32 250 50 0 stop-send stop-recv STOP -1 -6 1 13 -262144
+-1 -1;
+#X text 39 -10 GATE -90 dB;
+#X obj -3 113 cnv 15 590 40 empty empty empty 20 12 0 14 -203904 -66577
+0;
+#X obj 410 -162 knob 32 32 0 1 0 0 ui-inputknob-send ui-inputknob-recv
+empty 0 -8 0 8 -262144 -258113 -1 3100 1;
+#X obj 427 18 cnv 5 160 90 empty empty empty 20 12 0 14 -228856 -66577
+0;
+#N canvas 51 122 655 400 HELP 0;
+#X text 9 8 This is the user interface for MOIRE;
+#X text 16 33 You dont need to turn DSP on \, since audio is processed
+externally. This is only a user interface.;
+#X text 15 73 CHECK 1: If the "ACTIVE" checkbox (down-right) is checked
+\, audio and sensors are being processed. "samplerate" should be around
+1300;
+#X text 14 128 TO STOP: press the "STOP" button. Save the current state
+by pressing "CTRL-S" or go to File/Save. Then you can quit PD (CTRL-Q)
+;
+#X restore 534 18 pd HELP;
+#X obj 433 55 nbx 5 14 -1e+37 1e+37 0 0 empty ui-samplerate-recv samplerate
+0 -6 0 8 -233017 -33289 -1 -1 256;
+#X obj 433 24 tgl 15 0 onoff-send onoff-recv OFF 18 7 0 9 -258699 -258699
+-1 0 1;
+#X obj 339 89 tgl 15 1 autosave-send autosave-recv AUTOSAVE 18 7 0
+9 -262144 -24198 -1 1 1;
+#X text 373 132 * click on "pd HELP" for HELP;
+#X obj 433 85 nbx 5 14 -1e+37 1e+37 0 0 empty guirate guirate 0 -6
+0 8 -233017 -33289 -1 17 256;
+#X floatatom 359 -114 5 0 0 0 - vuanalogdb _;
+#X floatatom 550 -115 5 0 0 0 - vudigitaldb _;
+#X text -2 60 STEREO MAGNIFY (X);
+#X text 5 87 RINGMOD BOOST (%);
+#X obj 263 -76 nbx 3 13 -48 48 0 1 gainanalog-send gainanalog-recv
+dB 34 7 1 10 -99865 -262144 -66577 16 256;
+#X text 252 -74;
+#X obj 454 -77 nbx 3 13 -48 48 0 1 gaindigital-send gaindigital-recv
+dB 34 7 1 10 -99865 -262144 -66577 5 256;
+#X obj 518 -25 tgl 16 0 ui-mute-send ui-mute-recv M 6 8 0 9 -262144
+-1 -1 0 1;
+#N canvas 1192 44 703 490 advanced 1;
+#N canvas 246 266 938 564 guts 0;
+#X msg 13 91 set \$1;
+#X obj 13 31 rmstodb;
+#X obj 13 11 r ui-inputknob-send;
+#X obj 13 111 s ui-inputnb-recv;
+#X obj 241 151 loadbang;
+#X obj 15 228 r ringmodboost-send;
+#X obj 15 248 s ringmodboost-nb-recv;
+#X obj 12 182 s stereomagn-nb-recv;
+#X obj 12 162 r stereomagn-send;
+#X obj 15 378 change;
+#X obj 15 428 s dumpstate;
+#X obj 447 98 r dumpstate;
+#X msg 547 118 bang;
+#X obj 547 138 v g-mute;
+#X obj 547 159 s mute-send;
+#X msg 241 177 \; dumpstate bang \; isactive 0 \;;
+#X obj 15 292 r samplerate;
+#X obj 48 350 s isactive;
+#X obj 15 404 select 1;
+#X msg 200 52 menusave;
+#X obj 200 72 s pd-moiregui2.pd;
+#X text 237 129 INIT;
+#X obj 200 12 r autosave-send;
+#N canvas 1113 81 515 441 isactive 0;
+#X obj 157 38 inlet;
+#X obj 168 302 outlet;
+#X obj 127 120 timer;
+#X obj 260 16 loadbang;
+#X text 155 16 samplerate;
+#X obj 168 179 !*;
+#X obj 218 145 > 100;
+#X obj 177 208 select 0;
+#X obj 177 256 s ui-samplerate-recv;
+#X msg 177 232 -1;
+#X obj 127 74 t b b;
+#X obj 127 145 < 800;
+#X obj 127 97 delay 3;
+#X obj 260 39 metro 1000;
+#X connect 0 0 10 0;
+#X connect 0 0 6 0;
+#X connect 2 0 11 0;
+#X connect 3 0 13 0;
+#X connect 5 0 1 0;
+#X connect 5 0 7 0;
+#X connect 6 0 5 1;
+#X connect 7 0 9 0;
+#X connect 9 0 8 0;
+#X connect 10 0 12 0;
+#X connect 10 1 2 1;
+#X connect 11 0 5 0;
+#X connect 12 0 2 0;
+#X connect 13 0 10 0;
+#X restore 15 318 pd isactive;
+#N canvas 874 572 450 300 show-onoff-status 0;
+#X obj 90 107 select 0 1;
+#X obj 90 74 change;
+#X obj -8 43 speedlim 2000;
+#X msg 12 154 \; onoff-recv color 13 13 22 \; onoff-recv label OFF
+\; stop-recv color 0 22 22;
+#X msg 232 153 \; onoff-recv color 16 16 22 \; onoff-recv label ON
+\; stop-recv color 13 22 22;
+#X obj 90 9 r isactive;
+#X connect 0 0 3 0;
+#X connect 0 1 4 0;
+#X connect 1 0 0 0;
+#X connect 2 0 0 0;
+#X connect 5 0 1 0;
+#X connect 5 0 2 0;
+#X restore 491 16 pd show-onoff-status;
+#X obj 156 363 timer;
+#X obj 156 312 t b b;
+#X obj 173 389 s update-period;
+#X obj 136 339 delay 2;
+#X obj 200 32 metro 20000;
+#X obj 13 51 - 100;
+#X obj 13 71 int;
+#N canvas 366 324 450 300 mute-control 0;
+#X obj 53 33 change;
+#X obj 53 62 select 0 1;
+#X msg 53 126 \; ui-mute-recv color 0 22 22;
+#X obj 53 8 r ui-mute-send;
+#X msg 86 87 \; ui-mute-recv color 13 13 22;
+#X connect 0 0 1 0;
+#X connect 1 0 2 0;
+#X connect 1 1 4 0;
+#X connect 3 0 0 0;
+#X restore 491 40 pd mute-control;
+#X obj 170 524 s guirate;
+#X obj 156 413 t b f;
+#X obj 170 463 /;
+#X msg 156 438 1000;
+#X obj 170 504 int;
+#X obj 170 484 smooth 0.2;
+#X msg 447 185 \; stereomagn-recv bang \; ringmodboost-recv bang \;
+ui-mastergaindb-recv bang \; ui-gate1-recv bang \; ui-gate0-recv bang
+\; ui-minvar-recv bang \; ui-smooth-recv bang \; ui-speed-recv bang
+\; volcurve-recv bang \; diggainL-recv bang \; diggainR-recv bang \;
+ringspread-recv bang \; feedbackwet-recv bang \; feedback-recv bang
+\;;
+#X connect 0 0 3 0;
+#X connect 1 0 30 0;
+#X connect 2 0 1 0;
+#X connect 4 0 15 0;
+#X connect 5 0 6 0;
+#X connect 8 0 7 0;
+#X connect 9 0 18 0;
+#X connect 11 0 39 0;
+#X connect 11 0 12 0;
+#X connect 12 0 13 0;
+#X connect 13 0 14 0;
+#X connect 16 0 23 0;
+#X connect 16 0 26 0;
+#X connect 18 0 10 0;
+#X connect 19 0 20 0;
+#X connect 22 0 29 0;
+#X connect 23 0 17 0;
+#X connect 23 0 9 0;
+#X connect 25 0 27 0;
+#X connect 25 0 34 0;
+#X connect 26 0 28 0;
+#X connect 26 1 25 1;
+#X connect 28 0 25 0;
+#X connect 29 0 19 0;
+#X connect 30 0 31 0;
+#X connect 31 0 0 0;
+#X connect 34 0 36 0;
+#X connect 34 1 35 1;
+#X connect 35 0 38 0;
+#X connect 36 0 35 0;
+#X connect 37 0 33 0;
+#X connect 38 0 37 0;
+#X restore 7 7 pd guts;
+#N canvas 1501 91 450 300 pathsandlibs 0;
+#X obj 28 19 import cyclone;
+#X obj 28 41 import iemlib;
+#X obj 26 74 declare -path pd;
+#X restore 8 30 pd pathsandlibs;
+#N canvas 179 129 1166 696 osc 0;
+#X obj 363 566 r ui-speed-send;
+#X obj 193 176 sendOSC;
+#X msg 130 36 connect localhost 30018;
+#X obj 130 15 loadbang;
+#X msg 363 590 send /speedperiod_ms \$1;
+#X obj 374 451 r ui-smooth-send;
+#X msg 374 475 send /smooth_ms \$1;
+#X obj 367 508 r ui-minvar-send;
+#X msg 367 532 send /minvariation \$1;
+#X obj 601 -17 OSCroute /info;
+#X obj 655 445 s v0pre;
+#X obj 678 417 s v1pre;
+#X obj 697 388 s v0post;
+#X obj 716 362 s v1post;
+#X obj 380 -48 r ui-gate0-send;
+#X msg 380 -24 send /gate0db \$1;
+#X obj 379 164 r ui-gate1-send;
+#X msg 379 188 send /gate1db \$1;
+#X obj 380 53 r ui-mastergaindb-send;
+#X msg 380 78 send /mastergaindb \$1;
+#X obj 378 291 r ui-mute-send;
+#X msg 380 28 send /stereomagnify \$1;
+#X obj 616 507 s ui-mix-recv;
+#X obj 862 -15 s ui-inputknob-recv;
+#X obj 774 284 s vusource;
+#X obj 736 337 s masterL;
+#X obj 755 308 s masterR;
+#X obj 795 566 s masterdb;
+#X msg 378 369 send /mastermute \$1;
+#X obj 795 202 rmstodb;
+#X obj 855 222 - 100;
+#X obj 855 269 s vusourcedb;
+#X obj 601 -43 dumpOSC 30019;
+#X msg 377 263 send /ringmodboost \$1;
+#X obj 377 214 r ringmodboost-send;
+#X obj 380 4 r stereomagn-send;
+#X obj 794 170 s samplerate;
+#X obj 862 -42 r inputgain;
+#X obj 636 479 s inputgain;
+#X obj 379 106 r volcurve-send;
+#X msg 379 134 send /volcurve \$1;
+#X obj 376 396 r stop-send;
+#X msg 376 422 send /stop 1;
+#X obj 388 317 v g-mute;
+#X obj 388 342 r mute-send;
+#X obj 1017 39 r samplerate;
+#X obj 1017 62 s ui-samplerate-recv;
+#X obj 595 541 s measuredspeed;
+#X obj 987 232 s ui-measuredspeed-recv;
+#X obj 1067 177 smooth 0.1;
+#X obj 987 151 r measuredspeed;
+#X obj 987 205 int;
+#X obj 601 66 unpack f f f f f f f f f f f f f;
+#X obj 803 119 s vuanalogL;
+#X obj 822 93 s vuanalogR;
+#X obj 970 336 r vuanalogL;
+#X obj 1069 336 r vuanalogR;
+#X obj 998 420 s vuanalogdb;
+#X obj 997 467 r v0post;
+#X obj 1064 467 r v1post;
+#X obj 1004 502 amp2db_st;
+#X obj 1004 549 s vudigitaldb;
+#X obj 377 238 / 100;
+#X obj 998 393 int;
+#X obj 1004 525 int;
+#X obj 795 541 amp2db_st;
+#X obj 998 368 amp2db_st;
+#X obj 855 246 int;
+#X obj 24 105 r gainanalog-send;
+#X obj 24 125 db2amp;
+#X msg 24 145 send /gainanalog \$1;
+#X obj 27 213 db2amp;
+#X obj 27 193 r gaindigital-send;
+#X msg 27 233 send /gaindigital \$1;
+#X obj 27 273 r ringspread-send;
+#X msg 27 293 send /ringspread \$1;
+#X obj 31 362 r diggainL-send;
+#X msg 31 384 send /diggainL \$1;
+#X obj 48 442 r diggainR-send;
+#X msg 48 463 send /diggainR \$1;
+#X obj 41 517 r feedback-send;
+#X msg 41 540 send /feedback \$1;
+#X msg 80 596 send /feedbackwet \$1;
+#X obj 80 572 r feedbackwet-send;
+#X connect 0 0 4 0;
+#X connect 2 0 1 0;
+#X connect 3 0 2 0;
+#X connect 4 0 1 0;
+#X connect 5 0 6 0;
+#X connect 6 0 1 0;
+#X connect 7 0 8 0;
+#X connect 8 0 1 0;
+#X connect 9 0 52 0;
+#X connect 14 0 15 0;
+#X connect 15 0 1 0;
+#X connect 16 0 17 0;
+#X connect 17 0 1 0;
+#X connect 18 0 19 0;
+#X connect 19 0 1 0;
+#X connect 20 0 43 0;
+#X connect 20 0 28 0;
+#X connect 21 0 1 0;
+#X connect 28 0 1 0;
+#X connect 29 0 30 0;
+#X connect 30 0 67 0;
+#X connect 32 0 9 0;
+#X connect 33 0 1 0;
+#X connect 34 0 62 0;
+#X connect 35 0 21 0;
+#X connect 37 0 23 0;
+#X connect 39 0 40 0;
+#X connect 40 0 1 0;
+#X connect 41 0 42 0;
+#X connect 42 0 1 0;
+#X connect 44 0 28 0;
+#X connect 45 0 46 0;
+#X connect 50 0 51 0;
+#X connect 51 0 48 0;
+#X connect 52 0 47 0;
+#X connect 52 1 22 0;
+#X connect 52 2 38 0;
+#X connect 52 3 10 0;
+#X connect 52 4 11 0;
+#X connect 52 5 12 0;
+#X connect 52 6 13 0;
+#X connect 52 7 25 0;
+#X connect 52 7 65 0;
+#X connect 52 8 26 0;
+#X connect 52 8 65 1;
+#X connect 52 9 24 0;
+#X connect 52 9 29 0;
+#X connect 52 10 36 0;
+#X connect 52 11 53 0;
+#X connect 52 12 54 0;
+#X connect 55 0 66 0;
+#X connect 56 0 66 1;
+#X connect 58 0 60 0;
+#X connect 59 0 60 1;
+#X connect 60 0 64 0;
+#X connect 62 0 33 0;
+#X connect 63 0 57 0;
+#X connect 64 0 61 0;
+#X connect 65 0 27 0;
+#X connect 66 0 63 0;
+#X connect 67 0 31 0;
+#X connect 68 0 69 0;
+#X connect 69 0 70 0;
+#X connect 70 0 1 0;
+#X connect 71 0 73 0;
+#X connect 72 0 71 0;
+#X connect 73 0 1 0;
+#X connect 74 0 75 0;
+#X connect 75 0 1 0;
+#X connect 76 0 77 0;
+#X connect 77 0 1 0;
+#X connect 78 0 79 0;
+#X connect 79 0 1 0;
+#X connect 80 0 81 0;
+#X connect 81 0 1 0;
+#X connect 82 0 1 0;
+#X connect 83 0 82 0;
+#X restore 8 54 pd osc;
+#X obj 134 94 hsl 128 15 0 1 0 1 ringspread-send ringspread-recv |
+64 8 1 10 -262144 -1 -1 9300 1;
+#X text 8 91 RINGMOD - SPREAD;
+#X text 23 138 DIGITAL GAIN L;
+#X obj 134 140 hsl 128 15 0 2 0 1 diggainL-send diggainL-recv | 64
+8 1 10 -39609 -262144 -1 5500 1;
+#X obj 134 183 hsl 128 15 0 2 0 1 diggainR-send diggainR-recv | 64
+8 1 10 -39609 -262144 -1 8900 1;
+#X text 115 182 R;
+#X floatatom 131 199 5 0 0 0 - - -;
+#X floatatom 131 156 5 0 0 0 - - -;
+#X text 34 74 ------------------------------------------;
+#X obj 135 249 hsl 128 15 0 127 0 0 feedback-send feedback-recv 0--------------------|--------------------1
+-2 -8 1 9 -262144 -1 -1 900 1;
+#X text 63 246 FEEDBACK;
+#X obj 136 282 hsl 128 15 0 1 0 1 feedbackwet-send feedbackwet-recv
+| 64 8 1 10 -262144 -1 -1 700 1;
+#X text 38 280 FEEDBACK WET;
+#X floatatom 133 298 5 0 0 0 - - -;
+#X connect 6 0 10 0;
+#X connect 7 0 9 0;
+#X connect 14 0 16 0;
+#X restore 506 88 pd advanced;
