@@ -2,13 +2,14 @@
 import glob
 import sys
 import subprocess
-from time import sleep
+import time 
 import liblo
 import os
 
 LINUX_AUDIOINTERFACE = "Komplete"
 CSOUNDPATCH = "moire.csd"
 PDPATCH = "moiregui2.pd"
+PDAPP = "/Applications/Pd-0.44"
 CSPORT = 30018
 PDPORT = 30019
 
@@ -39,7 +40,7 @@ def exit(delay=5):
     print "/////  exiting ...  /////"
     print "/////////////////////////"
     print
-    sleep(delay)
+    time.sleep(delay)
     sys.exit(0)
 
 
@@ -76,12 +77,40 @@ def is_pd_running():
         return True
     return False
 
+def find_pd_binary():
+    if DARWIN:
+        pdapp = PDAPP
+        if not pdapp.endswith("app"):
+            pdapp = pdapp + '.app'
+        if not os.path.exists(pdapp):
+            return None
+        return "{pdapp}/Contents/Resources/bin/pd".format(pdapp=pdapp)
+    elif LINUX:
+        try:
+            p = subprocess.check_output("which pd".split())
+            if p:
+                return p.strip()
+        except OSError:
+            return None
+    else:
+        raise RuntimeError("OS not supported")
+
 def is_cs_running():
     try:
         s = liblo.Server(CSPORT)
     except liblo.ServerError:
         return True
     return False
+
+def check_csound_exit(starttime, exitmsg):
+    endtime = time.time()
+    if endtime - starttime < 5:
+        print 
+        print 
+        print "ERROR: Csound seems to have crashed:", exitmsg
+        print
+        print
+
 
 if __name__ == '__main__':
     arduino = find_arduino()
@@ -98,12 +127,13 @@ if __name__ == '__main__':
     if DARWIN:
         # launch PD on the background, we don't own it anymore
         if not is_pd_running():
-            os.system("open ./{pdpatch}".format(pdpatch=PDPATCH))
+            pdbinary = find_pd_binary()
+            os.system("open ./{pdpatch}".format(pd=pdbinary, pdpatch=PDPATCH))
         if is_cs_running():
             print "Csound is already running. Exiting"
             exit()
         # wait on csoundd
-        cs_flags = "-iadc -oadc -+rtaudio=pa_cb --env:CSNOSTOP=yes"
+        cs_flags = "-iadc -odac -+rtaudio=pa_cb --env:CSNOSTOP=yes"
         cmd = " ".join(("csound", cs_flags, cs_arduino, cs_patch))
         print "Calling csound with:\n\n" + cmd
         csoundproc = subprocess.Popen(cmd.split())
@@ -132,7 +162,7 @@ if __name__ == '__main__':
         cs_exe = "chrt 6 csound"
         cmd = " ".join((cs_exe, cs_flags, cs_arduino, cs_patch))
         proc_cs = subprocess.Popen(cmd.split())
-        sleep(2)
+        time.sleep(2)
         print "Calling csound with:\n\n" + cmd
         print
         print
@@ -143,6 +173,9 @@ if __name__ == '__main__':
         print 
         print
         try:
+            startime = time.time()
             proc_cs.wait()
+            check_csound_exit(starttime, proc_cs.poll())
         except KeyboardInterrupt:
             sys.exit(0)
+

@@ -10,16 +10,25 @@
 #define BAUDRATE 256000    // this does not matter in the leonardo
 #define SAMPLERATE 1200    // 2600 -> ksmps=16   1300 -> ksmps=32 (@44100Hz)   1800 -> ksmps=24
 #define FASTADC 0
-#define DEBUG_DATARATE 1
+
 #define PIN_FADER1 A5
 #define PIN_PEDAL1 A4
 #define PIN_BUTTON1 2
 #define PIN_LED1 3
-#define PIN_DEBUG 13
-#define CTRLRATE 16
+#define PIN_DEBUG 12
+#define PIN_LIGHT1 13
+#define PIN_DIP1 4
+#define PIN_DIP2 7
+#define CTRLRATE 18
 #define PEDAL_MARGIN 4
 #define FADER_MARGIN 2
 #define TOUCHED_THRESH 40
+#define LONG_PRESS_MILLIS 1500
+#define SHOW_PEDAL_OVERDRIVE 1
+
+#define DEBUG_CTRLRATE 8
+#define DEBUG_DATARATE 1
+
 byte enabled_pins[] = {A0, A1};
 
 //  ----------------- END CONFIG ----------------------
@@ -37,7 +46,8 @@ byte enabled_pins[] = {A0, A1};
 #define EEPROM_EMPTY16 65535  // Uninitialized slot
 #define ADDR0 0
 
-#define SERIALPRINT3(A, B, C) Serial.print(A); Serial.print(" "); Serial.print(B); Serial.print(" "); Serial.println(C);
+#define SERIALPRINT3(A, B, C) Serial.print(A); Serial.print(" "); Serial.print(B); Serial.print(" "); Serial.println(C); 
+#define SERIALPRINT5(A, B, C, D, E) Serial.print(A); Serial.print(" "); Serial.print(B); Serial.print(" "); Serial.print(C); Serial.print(" "); Serial.print(D); Serial.print(" "); Serial.println(E);
 
 // Define various ADC prescaler
 const unsigned char PS_16 = (1 << ADPS2);
@@ -60,14 +70,14 @@ unsigned int pedal1_last = 200,
 
 float pedal1_scale, fader1_scale;
 
-unsigned long but1_pressedtime = 0;
 unsigned long last_loop = 0;
 bool calibrating = false;
+int drive_light_with_pedal1 = 1;
 
 #if !DEBUG
 const int ctrl_period_ms = (1000/CTRLRATE);
 #else
-const int ctrl_period_ms = (1000/20);
+const int ctrl_period_ms = (1000/DEBUG_CTRLRATE);
 #endif
 
 // ------------- HELPERS ---------------------
@@ -104,9 +114,11 @@ float fader_linearize(int x) {
 
 void read_sample() {
   int value, pin;
+  /*
   if( calibrating ) {
     return;
   }
+  */
 #if !DEBUG
   Serial.write(DATABLOCK + numpins);    
   value = analogRead(A0);
@@ -168,8 +180,13 @@ void load_state() {
 //                   SETUP
 
 void setup() {
+
   pinMode(PIN_LED1, OUTPUT);
+  pinMode(PIN_LIGHT1, OUTPUT);
   pinMode(PIN_BUTTON1, INPUT_PULLUP);
+  pinMode(PIN_DIP1, INPUT_PULLUP);
+  pinMode(PIN_DIP2, INPUT_PULLUP);
+  digitalWrite(PIN_LIGHT1, HIGH);
   load_state();
   
   Serial.begin(BAUDRATE);
@@ -186,7 +203,9 @@ void setup() {
   ADCSRA |= PS_32;    // set our own prescaler to 64 
   
   Timer1.initialize(update_period_microsec);
-  Timer1.attachInterrupt( read_sample );
+  
+  // Comment to disable reading sensors
+  Timer1.attachInterrupt( read_sample );  
 
   pinMode(PIN_DEBUG, OUTPUT);    
 #if !DEBUG
@@ -197,12 +216,17 @@ void setup() {
 }
 
 void loop() {
-  int fader1, pedal1, but1=0;
+  int fader1, pedal1;
   int static but1_last;
+  int pedal1_warp;
+  bool send_control;
+  unsigned long static but1_press_t0;
   int static fader1_precalib, pedal1_precalib;
-    
-  /*
+  float f;
   unsigned long now = millis();
+
+  /*
+  
   if( now - last_loop < ctrl_period_ms ) {
     return;
   }
@@ -214,39 +238,43 @@ void loop() {
   digitalWrite(PIN_DEBUG, led_debug_status);
 #endif
 
-  //last_loop = now;
   noInterrupts();
   pedal1 = analogRead(PIN_PEDAL1);
   fader1 = analogRead(PIN_FADER1);
+
   interrupts();
+  
   
   fader1 = fader_linearize(fader1) * 1023;
   //fader1 = (fader1 + fader1_last) / 2;
   fader1 = int(fader1*0.66 + fader1_last*0.34);
-  fader1_last = fader1;
-  //pedal1 = int(pedal1*0.8 + pedal1_last*0.2);
+  
   pedal1 >>= 2; // drop 2 bits of resolution
   pedal1 <<= 2;
-  pedal1_last = pedal1;
   
-  but1 = 1 - digitalRead(PIN_BUTTON1);
-  
-  if( but1 == 0 && but1_last) {
+  int but1 = 1 - digitalRead(PIN_BUTTON1);
+  drive_light_with_pedal1 = 1 - digitalRead(PIN_DIP1);
+  pedal1_warp = 1 - digitalRead(PIN_DIP2);
+
+  if( but1 == 1 && !but1_last ) {
+    but1_press_t0 = now;
+  } else if( but1 == 0 && but1_last) {
     if( !calibrating) {
-      calibrating = true;
-      fader1_precalib = fader1;
-      pedal1_precalib = pedal1;
-      digitalWrite(PIN_LED1, HIGH); // this turns ON the LED
-#if DEBUG
-      Serial.println("CALIBRATING!");    
-#endif
+      if( now - but1_press_t0 < LONG_PRESS_MILLIS ) {
+        // short press, start calibration
+        calibrating = true;
+        fader1_precalib = fader1;
+        pedal1_precalib = pedal1;
+        digitalWrite(PIN_LED1, HIGH); // this turns ON the LED  
+      } else {
+        // long press, toggle light being driven
+        // TODO
+      }
+      
     } else {
       digitalWrite(PIN_LED1, LOW);
       save_state();
       calibrating = false;
-#if DEBUG
-      Serial.println("Stopped calibrating");
-#endif
     }
   } 
   but1_last = but1;
@@ -256,11 +284,22 @@ void loop() {
     fader1 = constrain(fader1, fader1_min, fader1_max);
     pedal1 = constrain(pedal1, pedal1_min, pedal1_max);
     fader1 = (fader1 - fader1_min) * fader1_scale;
-    pedal1 = (pedal1 - pedal1_min) * pedal1_scale;
-#if DEBUG
-    SERIALPRINT3("Fader1 MIN MAX", fader1_min, fader1_max);
-    SERIALPRINT3("Pedal1 MIN MAX", pedal1_min, pedal1_max);
-#endif
+    if( pedal1_warp ) {
+      f = ((pedal1 - pedal1_min)/float(pedal1_max - pedal1_min)) * 3.14159265 + 3.14159265;
+      f = (1+cos(f))/2.0;
+
+      pedal1 = f * 1023;   
+    } else {
+      pedal1 = (pedal1-pedal1_min) * pedal1_scale;
+    }
+    
+    if( drive_light_with_pedal1 ) {
+      analogWrite(PIN_LIGHT1, pedal1/4);
+    }
+    #if SHOW_PEDAL_OVERDRIVE
+      analogWrite(PIN_LED1, pedal1 > 920 ? (pedal1 - 920)/103.0 * 255 : 0);
+    #endif
+    // send_control = (pedal1 != pedal1_last || fader1 != fader1_last) ? 1 : 0;
   } 
   else { // CALIBRATION
     // Has it moved yet? No -> adjust extremes
@@ -294,24 +333,30 @@ void loop() {
 #endif
   }
   
-  noInterrupts();  // <--- A control block cannot be interrupted by a data block
 #if !DEBUG
-  // PROTOCOL: 1 byte | fader1:uint16 | pedal1:utin16
-  Serial.write(CONTROLBLOCK);
-  Serial.write(fader1 >> 7);
-  Serial.write(fader1 & 0b1111111);
-  Serial.write(pedal1 >> 7);
-  Serial.write(pedal1 & 0b1111111);
+  //if (send_control) {
+    noInterrupts();  // <--- A control block cant be interrupted by a data block
+      Serial.write(CONTROLBLOCK);
+
+      Serial.write(fader1 >> 7);
+      Serial.write(fader1 & 0b1111111);
+
+      Serial.write(pedal1 >> 7);
+      Serial.write(pedal1 & 0b1111111);
+    interrupts();
+    fader1_last = fader1;
+    pedal1_last = pedal1;
+  //}
 #else
   // DEBUG
   if( !calibrating ) {
-    Serial.print("fader1: ");
-    Serial.println(fader1);
-    Serial.print("pedal1: ");
-    Serial.println(pedal1);
+    noInterrupts();
+    SERIALPRINT5("Fader Pedal Dip1 Dip2", fader1, pedal1, drive_light_with_pedal1, pedal1_warp)
+    SERIALPRINT5("Fader1 MIN:MAX Pedal1 MIN:MAX", fader1_min, fader1_max, pedal1_min, pedal1_max)
+    interrupts();
+    fader1_last = fader1;
+    pedal1_last = pedal1;
   }
 #endif
-  interrupts(); 
   delay(ctrl_period_ms);
-  
 }

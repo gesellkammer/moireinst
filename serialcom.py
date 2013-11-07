@@ -9,7 +9,7 @@ import os
 CSOUNDPORT = 30018
 
 def detect_arduino():
-	if sys.platform == 'darwin':
+        if sys.platform == 'darwin':
 		arduino = glob.glob("/dev/tty*usb*")
 		if arduino:
 			return arduino[0]
@@ -78,5 +78,7 @@ def listen(s):
 			send(_addr, '/ctrl', fader1, pedal1, samplerate)
 
 if __name__ == '__main__':
+        print "listening to arduino:     ", arduino
+        print "sending data to OSC port: ", CSOUNDPORT
 	listen(s)
 
