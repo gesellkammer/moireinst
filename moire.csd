@@ -1,11 +1,11 @@
 <CsoundSynthesizer>
 <CsOptions>
--b1024   
--B2048
+-b256
+-B512
 // OSX
 // --omacro:ARDUINO=/dev/tty.usbmodemfd111
 // --omacro:ARDUINO=/dev/tty.usbmodem1a21
---omacro:ARDUINO=/dev/tty.usbmodem1d11
+// --omacro:ARDUINO=/dev/tty.usbmodem1d11
 
 ;; Linux
 ;--omacro:ARDUINO=/dev/arduinoleo
@@ -20,26 +20,41 @@ sr     = 44100
 
 ;; ---------- CONFIG ----------
 
-; audio channels
+;;;  AUDIO UI
 #define FROM_SOURCE #3#              
 #define FROM_MOIRE1 #1#
-#define FROM_MOIRE2 #2#                
+#define FROM_MOIRE2 #2#   
+#define SIMULATE_OUTCHANNEL #4#            
 
+;;; OSC
 #define ADDR_HOST #"127.0.0.1"#
 #define ADDR_PORT #30019#
 #define OSCPORT   #30018#
-#define ADAPTPERIODX #12#
-#define UIUPDATERATE #16#
+#define UIUPDATERATE #12#
 
-#define FLUSHSERIALRATE #0.2#
-#define FLUSHSERIAL_NUMCHARS #100#
+#define ADAPTPERIODX #12#
+
+#define PEDAL_MIN #0.01#
+#define PEDAL_MAX #0.99#
+#define FADER2_MIN #0.01#
+#define FADER2_MAX #0.94#
+
+#define DOPPLER_RAND_BW #0.2#
+#define DOPPLER_RAND_FREQ #5#
 
 #define USE_OUTPUT_LIMITER #1#
+#define FLUSHSERIALRATE #0.2#
+#define FLUSHSERIAL_NUMCHARS #100#
 
 ;; ------ PRIVATE --------
 #define SAW #1#
 #define End #1000#
-#define TestAudioOut #1001#
+#define TestAudioOut   #1001#
+#define SimulateSource #1002#
+#define Pingback       #1003#
+
+#define SIMULATE_STRAIN #1#
+#define DISTORTION_METHOD_DISTORT1 #1#
 
 ;; ------- INIT ----------
 ga_source init 0
@@ -60,25 +75,33 @@ gk_volcurve      init 1
 gk_vuanalogL     init 0
 gk_vuanalogR     init 0
 gk_ringmod       init 0.001
-gk_gate0         init ampdb(-40)
-gk_gate1         init ampdb(-24)
-gk_gain_analog   init 1
-gk_gain_digital  init 1
+gk_gate0         init 60
+gk_gate1         init -24
+gk_gaindigpre  	 init 1
+gk_gaindigpost	 init 1
 gk_freqmult      init 1
 gk_ringspread    init 1
 gk_diggainL      init 1
 gk_diggainR      init 1
 gk_feedback      init 0.1
 gk_feedbackwet   init 0.6
-gk_testaudio_on  init 0
+gk_testaudio_state  init 0
 gk_vusource_prefader init 0
 gk_max0, gk_max1 init 0
 gk_min0, gk_min1 init 0
-gk_shiftbw       init 8
-gk_shiftwet      init 1
+gk_shift         init 8
 gk_phasewet      init 0.6
-gk_gainanalogpost init 0
-gk_volpedal_overdrive init 0
+gk_gainanalog	 init 1
+gk_gainanalogpost init 1
+gk_anagatethreshdb init -90
+gk_anagateexp init 60
+gk_fader1 init 10
+gk_strain init 0
+gk_postinit init 0
+gk_smoothcurve init 1
+gk_smoothgain  init 1
+gk_printtrig init 0
+gk_dopplerfreq init 0 
  
 giSerial serialBegin "$ARDUINO", 115200
 giOSC OSCinit $OSCPORT
@@ -122,6 +145,80 @@ opcode gate3cos, k, kkkk
 	xout kout
 endop
 
+opcode expgate, a, akkjjj
+	a0, kthreshdb, kexp, idiff, iatt, irel xin
+	idiff = idiff > 0 ? idiff : 30
+	iatt = iatt > 0 ? iatt : 0.001
+	irel = irel > 0 ? irel : 0.002
+	ilook = iatt * 1
+	k0 = kthreshdb - idiff
+	kx0 = ampdb(k0)
+	ky0 = limit(ampdb(k0 - (kthreshdb-k0)*2), 0, 1)
+	ky1 = ampdb(kthreshdb)
+	kx1 = ky1
+	kamp = rms(a0, 50)
+	kgain2 init 0
+	if( kamp < kx0 ) then
+		kgain = 3.1622776601683795e-05  ;; -90 dB
+	elseif (kamp < kx1) then
+		kamp2 = ky0 + (ky1 - ky0) * ((kamp - kx0)/(kx1 - kx0))
+		kgain = pow(kamp2 / kamp, kexp)
+	else
+		kgain = 1
+	endif
+	ktime = port(kgain > kgain2 ? iatt : irel, 0.001)
+	kgain2 = portk(kgain, ktime)
+	a0 *= interp(kgain2)
+	a0 delay a0, ilook
+	xout a0
+endop
+
+opcode expgatek, k, kkkjjj
+	kamp, kthreshdb, kexp, idiff, iatt, irel xin
+	idiff = idiff > 0 ? idiff : 30
+	iatt = iatt   > 0 ? iatt  : 0.001
+	irel = irel   > 0 ? irel  : 0.002
+	ilook = iatt * 1
+	k0 = kthreshdb - idiff
+	kx0 = ampdb(k0)
+	ky0 = limit(ampdb(k0 - (kthreshdb-k0)*2), 0, 1)
+	ky1 = ampdb(kthreshdb)
+	kx1 = ky1
+	kgain2 init 0
+	if( kamp < kx0 ) then
+		kgain = 3.1622776601683795e-05  ;; -90 dB
+	elseif (kamp < kx1) then
+		kamp2 = ky0 + (ky1 - ky0) * ((kamp - kx0)/(kx1 - kx0))
+		kgain = pow(kamp2 / kamp, kexp)
+	else
+		kgain = 1
+	endif
+	ktime = port(kgain > kgain2 ? iatt : irel, 0.001)
+	xout portk(kgain, ktime)
+endop
+		
+opcode waveshapedist, a, ak
+	asig, kamount xin
+	kamount = limit(kamount, 0.000001, 0.999)
+	kfoo = 2*kamount/(1-kamount)
+	asig = (1+kfoo)*asig / (1+(kfoo*abs(asig)))
+	asig = limit(asig, -1, 1)
+	xout asig
+endop
+
+opcode hypersat, a, ak
+	asig, kth xin
+	kth = max(kth, 0.0000000000001)
+	aout = asig / (abs(asig*(1/kth))+1)
+	xout aout
+endop	
+
+opcode tansat, a, ak
+	asig, kdrv xin
+	asig = tanh(asig*kdrv)
+	xout asig
+endop
+
 ;; --------- INSTRUMENTS -------------
 instr FlushSerialRegularly
 	ktrig metro $FLUSHSERIALRATE
@@ -145,69 +242,116 @@ read1:
 endin
 
 instr ReadSerial
-	// GEN27: linear bpf
-	itab_pedal ftgen 0, 0, -1024, -27, 0, 0, 400, ampdb(-12), 680, ampdb(-3), 780, 1, 1000, 1, 1020, 1
+	itab_pedal ftgen 0, 0, -1024, -27,  0,0,  512,ampdb(-18),  800,ampdb(-6),  1000,1,  1024,1
+	itab_knob  ftgen 0, 0, -1024, -27,  0,0, 32,1, 42,1.001, 137,2,  240,3,  347,4,  469,5,  586,6,  704,7,  827,8,  954,9,  999,10,  1024,10
 	
-	k_fader1 init 0
 	k_pedal1 init 0
+	k_fader1 init 0
+	k_fader2 init 0
 	k_counter init 0
-	kVal = serialRead(giSerial)
+	
 	k_lasttime init 0
 	k_samplerate init 0
-
-	k0 = limit((k_fader1 - 0.03)/0.92, 0, 1)
-	gk_mix = port(k0, 0.001)    
-	k0 = limit((k_pedal1 - 0.02)/0.99, 0, 1)
-	gk_volpedal = tablei(k0*1000, itab_pedal)
-	gk_volpedal_overdrive = k0 < 0.85 ? 0 : (k0 - 0.85) / 0.14
-	// gk_volpedal = port(pow(k0, gk_volcurve), 0.001)
- 
-	if (kVal < 128) kgoto exit
-	if( kVal < 140 ) then   
-		k0  = serialRead(giSerial)
-		k0 *= 128
+	
+	k0 = serialRead(giSerial)
+	if (k0 < 128) kgoto exit
+	if( k0 < 140 ) then   
+		k0  = serialRead(giSerial) * 128
 		k0 += serialRead(giSerial)
 		gkV0 = k0/1023 * gk_diggainL
-		k0  = serialRead(giSerial)
-		k0 *= 128
+		k0  = serialRead(giSerial) * 128
 		k0 += serialRead(giSerial)
 		gkV1 = k0/1023 * gk_diggainR
 		k_counter += 1
 		goto exit
 	endif
-	if( kVal == 140 ) then
-		k0 = serialRead(giSerial)
-		k0 *= 128
-		k0 += serialRead(giSerial)
-		k_fader1 = (k0/1023)
+	if( k0 == 140 ) then
+		; pedal1, fader1, fader2, but1, but2
 		k0 = serialRead(giSerial)
 		k0 *= 128
 		k0 += serialRead(giSerial)
 		k_pedal1 = k0/1023
+		
+		k0 = serialRead(giSerial)
+		k0 *= 128
+		k0 += serialRead(giSerial)
+		k_fader1 = k0/1023
+		
+		k0 = serialRead(giSerial)
+		k0 *= 128
+		k0 += serialRead(giSerial)
+		k_fader2 = k0/1023
+		
+		gk_but1 = serialRead(giSerial)
+		gk_but2 = serialRead(giSerial)
+		goto exit
+	endif
+	if( k0 == 200 ) then
 		k_now times
-		if( k_now - k_lasttime > 1) then
-			k_samplerate = k_counter / (k_now - k_lasttime)
-			k_counter = 0
-			k_lasttime = k_now
-			gk_samplerate = k_samplerate
-		endif
+		k_samplerate = k_counter / (k_now - k_lasttime)
+		k_counter = 0
+		k_lasttime = k_now
+		gk_samplerate = k_samplerate
 	endif
 exit:
+	k0 = limit((k_fader2 - $FADER2_MIN)/$FADER2_MAX, 0, 1)
+	gk_mix = port(k0, 0.01)    
+	k0 = limit((k_pedal1 - $PEDAL_MIN)/$PEDAL_MAX, 0, 1)
+	gk_volpedal = tablei(k0*1023, itab_pedal)
+	// gk_fader1 = tablei(k_fader1*1000, itab_knob)
+	gk_fader1 = table(k_fader1*1000, itab_knob)
 endin
 
 ;; --- NB: ampdb = db2amp  dbamp = amp2db
+
+opcode oscprint,0,Sk
+	Slabel, kvalue xin
+	OSCsend gk_printtrig, "127.0.0.1", 31415, "/print", "sf", Slabel, kvalue
+endop
+
 instr Brain 
-	kavg = (gkV0 + gkV1)*0.5
-	k0 = kavg + (gkV0-kavg)*gk_stereomagnify
-	k1 = kavg + (gkV1-kavg)*gk_stereomagnify
-	kmax = max(k0, k1)
+	itab_feedback    ftgen 0, 0, -110, -27,  0,0,	10,0.91,	20,0.91,	30,0.91,	40,0.98,	     50,0.98,	55,0.92,													110,0.92
+	itab_feedbackwet ftgen 0, 0, -110, -27,  0,0,				20,0.34,	30,0.8,		40,0.8,	45,0.34, 50,0.34,	60,0,					80,0,		90,0.34,	100,0,		110,0
+	itab_phasewet	 ftgen 0, 0, -110, -27,  0,0,										        45,0,  	 50,0.34,	60,0.7,		70,0,		80,0,		90,0.34,	100,0.34,	110,0.34
+	itab_ringmod	 ftgen 0, 0, -110, -27,  0,0,																			70,0,		80,0.8,		90,0,		100,0,		110,0
+	itab_freqmult    ftgen 0,0, -100,-27,  0,1, 50,1, 80,2,100,2
+	
+	gk_printtrig = metro(50)
+	
+	kL = gkV0 * gk_gaindigpre
+	kR = gkV1 * gk_gaindigpre
+	kavg = (kL + kR)*0.5
+	kL = limit(kavg + (kL-kavg)*gk_stereomagnify, 0, 2)
+	kR = limit(kavg + (kR-kavg)*gk_stereomagnify, 0, 2)
+	kmax = max(kL, kR)
 	if (kmax > 1) then
-		k0 = k0/kmax
-		k1 = k1/kmax
-	endif
-	gk_v0post = gate3lin(k0, gk_gate0, gk_gate1, gk_gate0) * gk_gain_digital
-	gk_v1post = gate3lin(k1, gk_gate0, gk_gate1, gk_gate0) * gk_gain_digital
-	gk_freqmult = scale((gkV0+gkV1)*0.5, 3, 2)
+		kL = kL/kmax
+		kR = kR/kmax
+	endif 
+	kL *= expgatek(kL, gk_gate1, gk_gate0, 24, 0.001, 0.002) * gk_gaindigpost
+	kR *= expgatek(kR, gk_gate1, gk_gate0, 24, 0.001, 0.002) * gk_gaindigpost
+	kbut1 = port(gk_but1, 0.05)
+	gk_v0post = ntrpol(kL, pow(kL, gk_smoothcurve)*gk_smoothgain, kbut1)
+	gk_v1post = ntrpol(kR, pow(kR, gk_smoothcurve)*gk_smoothgain, kbut1)
+	
+	k_knobtrig = changed(gk_fader1, gk_postinit)
+	if (k_knobtrig == 0) kgoto exit
+	ki = gk_fader1*10
+	gk_feedback    = tablei(ki, itab_feedback)
+	gk_feedbackwet = tablei(ki, itab_feedbackwet)
+	gk_phasewet    = tablei(ki, itab_phasewet)
+	gk_ringmod     = tablei(ki, itab_ringmod)
+	gk_freqmult    = table(gk_ringmod*100, itab_freqmult) * scale(kavg, 2, 1)
+exit:
+	OSCsend k_knobtrig, $ADDR_HOST, $ADDR_PORT, "/preset", "ffff", \
+		gk_feedback, gk_feedbackwet, gk_phasewet, gk_ringmod
+	k_buttrig = changed(gk_but1, gk_but2) 
+	OSCsend k_buttrig, $ADDR_HOST, $ADDR_PORT, "/buttons", "ii", gk_but1, gk_but2
+endin
+
+instr PostInit
+	gk_postinit = 1
+	turnoff
 endin
 
 instr UI_osc
@@ -221,60 +365,91 @@ instr UI_osc
 	kgate0db       init -40
 	kgate1db       init -20
 	kstop          init 0
-	ktestaudio     init 0
+	ktestmode      init 0
+	ktestfreq	   init 220
+	ktestamp	   init 1
+	ktestinterval  init 0
+	kstrain 	   init 0
+	kpingport	   init 0
 	; ---------------------------------
 		
-	ksendtrig metro $UIUPDATERATE
+	kosctrig metro $UIUPDATERATE
 	ksmoothfreq = port(gk_freq, 1/$UIUPDATERATE)
 
-	if (ksendtrig == 0) kgoto skip_osc_in
-	k0 OSClisten giOSC, "/speedperiod_ms", "i", kspeedperiod
+	if (kosctrig == 0) kgoto skip_osc_in
+	k0 OSClisten giOSC, "/speedperiod_ms", 	"i", kspeedperiod
 	gk_speedwindow = kspeedperiod/1000
-	k0 = OSClisten(giOSC, "/minvariation", "f", gk_minvariation)
-	k0 = OSClisten(giOSC, "/smooth_ms", "i", ksmooth)
+	k0 OSClisten giOSC, "/smooth_ms", 		"i", ksmooth
 	gk_smooth = ksmooth/1000
-	k0 = OSClisten(giOSC, "/stereomagnify", "f", gk_stereomagnify)
-	k0 = OSClisten(giOSC, "/mastergaindb", "f", kmastergaindb)
-	k0 = OSClisten(giOSC, "/mastermute", "i", kmute)
-	k0 = OSClisten(giOSC, "/gate0db", "f", kgate0db)
-	gk_gate0 = ampdb(kgate0db)
-	k0 = OSClisten(giOSC, "/gate1db", "f", kgate1db)
-	gk_gate1 = ampdb(kgate1db)
-	k0 = OSClisten(giOSC, "/ringmodboost", "f", gk_ringmod)
-	k0 OSClisten giOSC, "/gainanalog", "f", gk_gain_analog
-	k0 OSClisten giOSC, "/gaindigital", "f", gk_gain_digital
-	k0 OSClisten giOSC, "/ringspread", "f", gk_ringspread
-	k0 OSClisten giOSC, "/diggainL", "f", gk_diggainL
-	k0 OSClisten giOSC, "/diggainR", "f", gk_diggainR
-	k0 OSClisten giOSC, "/feedback", "f", gk_feedback
-	k0 OSClisten giOSC, "/feedbackwet", "f", gk_feedbackwet
-	k0 OSClisten giOSC, "/shiftwet", "f", gk_shiftwet
-	k0 OSClisten giOSC, "/phasewet", "f", gk_phasewet
-	k0 OSClisten giOSC, "/gainanalogpost", "f", gk_gainanalogpost
+	k0 OSClisten giOSC, "/minvariation",	"f", gk_minvariation
+	k0 OSClisten giOSC, "/stereomagnify", 	"f", gk_stereomagnify
+	k0 OSClisten giOSC, "/mastergaindb", 	"f", kmastergaindb
+	k0 OSClisten giOSC, "/mastermute", 		"i", kmute
+	k0 OSClisten giOSC, "/gatedig0", 		"f", gk_gate0
+	k0 OSClisten giOSC, "/gatedig1", 		"f", gk_gate1
+	k0 OSClisten giOSC, "/ringmodboost", 	"f", gk_ringmod
+	k0 OSClisten giOSC, "/gainanalog", 		"f", gk_gainanalog
+	k0 OSClisten giOSC, "/gaindigpre", 		"f", gk_gaindigpre
+	k0 OSClisten giOSC, "/gaindigpost", 	"f", gk_gaindigpost
+	k0 OSClisten giOSC, "/ringspread", 		"f", gk_ringspread
+	k0 OSClisten giOSC, "/diggainL", 		"f", gk_diggainL
+	k0 OSClisten giOSC, "/diggainR", 		"f", gk_diggainR
+	k0 OSClisten giOSC, "/feedback", 		"f", gk_feedback
+	k0 OSClisten giOSC, "/feedbackwet", 	"f", gk_feedbackwet
+	k0 OSClisten giOSC, "/shift", 			"f", gk_shift
+	k0 OSClisten giOSC, "/phasewet", 		"f", gk_phasewet
+	k0 OSClisten giOSC, "/gainanalogpost",  "f", gk_gainanalogpost
+	k0 OSClisten giOSC, "/anagatethreshdb", "f", gk_anagatethreshdb
+	k0 OSClisten giOSC, "/anagateexp", 		"f", gk_anagateexp
+	k0 OSClisten giOSC, "/smoothing",       "ff", gk_smoothcurve, gk_smoothgain 
+#ifdef SIMULATE_STRAIN
+	k0 OSClisten giOSC, "/strain", "f", kstrain
+#endif
 	k0 OSClisten giOSC, "/stop", "i", kstop
 	if( kstop == 1 ) then
 		event "i", $End, 0, 0.1
 	endif
-	k0 OSClisten giOSC, "/testaudio", "i", ktestaudio
-	if (ktestaudio != gk_testaudio_on) then
-		if ( ktestaudio == 1 ) then
-			event "i", $TestAudioOut, 0, 360000
-			gk_testaudio_on = 1
-		else
-			turnoff2 $TestAudioOut, 0, 0.1
-			gk_testaudio_on = 0
-		endif
+	k0 OSClisten giOSC, "/ping", "i", kpingport
+	if (k0 == 1) then
+		event "i", $Pingback, 0, 0.1, kpingport
 	endif
-
+	k0 OSClisten giOSC, "/testaudio", "ifff", ktestmode, ktestfreq, ktestamp, ktestinterval
+	if (k0 == 0) kgoto skip_test
+	if (ktestmode > 0 ) then  ;; asked to turn on, update values
+		gk_testfreq = ktestfreq
+		gk_testamp  = ktestamp
+		gk_testinterval = ktestinterval
+		if( gk_testaudio_state == 0) then
+			event "i", $SimulateSource, 0, 360000, ktestmode
+		elseif ( gk_testaudio_state > 0 && gk_testaudio_state != ktestmode) then ;; we are already on, has the mode changed?
+			turnoff2 $SimulateSource, 0, 0.1
+			event "i", $SimulateSource, 0, 360000, ktestmode
+		endif
+			
+		gk_testaudio_state = ktestmode
+	elseif (gk_testaudio_state > 0) then   ;; asked to turnoff, are we on?
+		turnoff2 $SimulateSource, 0, 0.1
+		gk_testaudio_state = 0
+	endif
+skip_test:
 skip_osc_in:
-	OSCsend ksendtrig, $ADDR_HOST, $ADDR_PORT, "/info", "ffffffffffffff", \
+	OSCsend kosctrig, $ADDR_HOST, $ADDR_PORT, "/info", "fffffffffffffffff", \
 				ksmoothfreq, gk_mix, gk_volpedal, gkV0, gkV1, gk_v0post, gk_v1post, \ 
 				gk_vumasterL, gk_vumasterR, gk_vusource, gk_samplerate, gk_vuanalogL, \
-				gk_vuanalogR, gk_vusource_prefader
-	gk_mastergain = port(ampdb(kmastergaindb) * (1-kmute), 0.05)	
+				gk_vuanalogR, gk_vusource_prefader, gk_fader1, gk_strain, gk_dopplerfreq
+
+	gk_mastergain = port(ampdb(kmastergaindb) * (1-kmute), 0.05)
+	gk_strain = kstrain
+
 endin
 
 ;; --------------------------------------------------------------
+instr $Pingback
+	iport = p4
+	OSCsend 1, "127.0.0.1", iport, "/pingback", "i", 1
+	turnoff
+endin
+
 instr CalculateSpeed
 	i_amptable ftgen 0, 0, -1001, 7,   0, 1, 0, 4, 0.001, 11, 0.063095734448, 4, 1, 980, 1
 	iperdur = ksmps/sr
@@ -351,23 +526,45 @@ opcode freqshift, aa, akk
 	acos oscili kamp, kfreq, gi_sinetable, 0.25
 	amod1 = areal*acos
 	amod2 = aimag*asin
-	aup = (amod1 - amod2) * 0.7
-	adown = (amod1 + amod2) * 0.7
-	xout aup, adown
+	aup   = amod1 - amod2
+	adown = amod1 + amod2
+	xout adown, aup
 endop
 
-opcode freqshift1, a, ak
-	ain, kdeltafreq xin
+opcode freqshift2, aa, ak
+	ain, kfreq, kamp xin
 	areal, aimag hilbert ain
-	asin oscili 1, kdeltafreq, gi_sinetable
-	acos oscili 1, kdeltafreq, gi_sinetable, 0.25
+	kfreqpos = abs(kfreq)
+	asin oscili 1, kfreqpos, gi_sinetable
+	acos oscili 1, kfreqpos, gi_sinetable, 0.25
 	amod1 = areal*acos
 	amod2 = aimag*asin
-	kwhich = port(kdeltafreq >= 0 ? 1 : 0, 0.01)
-	aup = amod1 - amod2
+	aup   = amod1 - amod2
 	adown = amod1 + amod2
+	kwhich = port(kfreq < 0 ? 0 : 1, 0.005)
+	;;kwhich = interp(kfreq < 0 ? 0 : 1)
+	;;a1 = adown*kwhich + aup*(1-kwhich)
+	;;a2 = aup*kwhich + adown*(1-kwhich)
+	a1 = ntrpol(aup, adown, kwhich)
+	a2 = ntrpol(adown, aup, kwhich)
+	xout a1, a2
+endop
+
+opcode freqshift1, ak, ak
+	ain, kdeltafreq xin
+	kabsdelta = abs(kdeltafreq)
+	areal, aimag hilbert ain
+	asin oscili 1, kabsdelta, gi_sinetable
+	acos oscili 1, kabsdelta, gi_sinetable, 0.25
+	amod1 = areal*acos
+	amod2 = aimag*asin
+	aup   = amod1 - amod2
+	;adown = amod1 + amod2
+	adown = pinkish(0.5)
+	kwhich = port(kdeltafreq < 0 ? 0 : 1, 0.05)
+
 	aout ntrpol adown, aup, kwhich
-	xout aout
+	xout aout, kwhich
 endop
 		
 opcode lforange, k, kkki
@@ -457,7 +654,7 @@ endop
 
 opcode fbcomb, a, akk
 	ain, kfback, kdel xin
-	krvt = -4.605170185988091 * kdel / log(kfback)
+	krvt = port(-4.605170185988091 * kdel / log(kfback), 0.001)
 	aout vcomb ain, krvt, interp(kdel), 0.5
 	xout aout
 endop
@@ -481,60 +678,113 @@ opcode ffcomb_a, a, aka
 	xout ain + atap
 endop
 
+opcode tubesat, a,akk
+	a0, kdrive, klim xin
+	ahgh butterhp a0, klim
+	a0   butterlp a0, klim
+	a0 *= kdrive
+	a0 = 0.5*pow(a0+1.41, 2) - 1
+	a0 *= sqrt(1/kdrive)
+	a0 += delay(ahgh, 4/sr)
+	xout a0
+endop
+
 ;; --------------------------------------------------------------
 instr Audio
 	kuimetro = metro($UIUPDATERATE)
 	
 	;; --- CURVES ---
-	itab_speed2ringenv ftgen 0, 0, -513, -27, 0,0,   2,0,  16,0.01,  30,1,  400,1
-	itab_speed2fback   ftgen 0, 0, -513, -27, 0,0.85, 4,0.9, 16,0.93, 50,0.93, 150,0.97, 200,0.99, 250, 0.99, 400,0.9999
-	itab_sourceamp2fbackmult ftgen 0, 0, -200, -27, 0, 1, 80, 1, 90, 1.01, 100, 1.02
+	
+	// itab_sigmoid ftgen	0,0, 257, 9, .5,1,270,1.5,.33,90,2.5,.2,270,3.5,.143,90,4.5,.111,270
+	itab_sigmoid ftgen	0,0, 257, 9, .5,1,270
 	
 	;; --- SOURCE ---
 	aSource inch $FROM_SOURCE
 	ksourcegain = port(gk_volpedal, 0.025)
 	
 	gk_vusource_prefader = max_k(aSource, kuimetro, 1)
-	aSource *= interp(ksourcegain)
+	;; aSource *= interp(ksourcegain)
+	aSource *= ksourcegain
 	aMoireL   inch $FROM_MOIRE1
 	aMoireR   inch $FROM_MOIRE2
 	
-	ksourceampdb  = 90 - rms(aSource)
-	
 	;; --- ANALOG ---
-	kgainanalog = gk_gain_analog * ksourcegain
+	kgainanalog = gk_gainanalog * ksourcegain
 	aAnaL = aMoireL * kgainanalog
 	aAnaR = aMoireR * kgainanalog
-	kgate0db = 96 + dbamp(gk_gate0)
-	kgate1db = 96 + dbamp(gk_gate1)
+	aAnaL = expgate(aAnaL, gk_anagatethreshdb, gk_anagateexp)
+	aAnaR = expgate(aAnaR, gk_anagatethreshdb, gk_anagateexp)
 	
-	;; -- TODO : analog gate
-	
+#ifdef DISTORTION_METHOD_DISTORT1
+/*
+	adistL distort aAnaL, gk_strain, itab_sigmoid
+	adistR distort aAnaR, gk_strain, itab_sigmoid
+*/	
+kpre = 1+gk_strain*2
+kpost = 1/limit(kpre, 0.00001, 1)
+	adistL distort1 aAnaL, kpre, kpost, 0.5, 0.5, 1
+	adistR distort1 aAnaR, kpre, kpost, 0.5, 0.5, 1
+	aAnaL ntrpol aAnaL, adistL, gk_strain
+	aAnaR ntrpol aAnaR, adistR, gk_strain
+#else
+	adistL hypersat aAnaL, gk_strain
+	adistR hypersat aAnaR, gk_strain
+	aAnaL ntrpol aAnaL, adistL, gk_strain
+	aAnaR ntrpol aAnaR, adistR, gk_strain
+#end
+	aAnaL *= gk_gainanalogpost
+	aAnaR *= gk_gainanalogpost
 	gk_vuanalogL = max_k(aAnaL, kuimetro, 1)
 	gk_vuanalogR = max_k(aAnaR, kuimetro, 1)
 
-	;; denormalize
 	denorm aSource, aAnaL, aAnaR
 	
-	;; --- FREQSHIFT --- 
-	aDigL = aSource
-	irandbw = 0.4
-	kshiftbw = gk_shiftbw * (1-irandbw*0.5+randi(irandbw, 5))
-	kdeltafreq = port(scale((gk_v1post - gk_v0post), kshiftbw, 0.25), 0.01)
-	ashiftR = freqshift1(aSource, kdeltafreq)
-	aDigR = ntrpol(aSource, ashiftR, gk_shiftwet)
+	aDigL = tansat(aSource, 2)
+	aDigR = aDigL
+	;; --- DOPPLER ---
+	if( gk_but2 == 0 ) kgoto skip_shift
+	
+	;;aDigL = tubesat(aDigL, 1, 1200)
+	
+	;;aDigR = tubesat(aDigR, 1, 1200)
+	
+	goto skip_shift
+	
+	
+	irandbw = $DOPPLER_RAND_BW
+	kshiftbw = gk_shift * (1-irandbw*0.5+randi(irandbw, $DOPPLER_RAND_FREQ))
+	kdeltafreq = port((gk_v1post - gk_v0post)/(gk_v0post+gk_v1post) * kshiftbw + 0.25, 0.01)
+	// we divide by 2 because to calculate the deviation of each channel
+	gk_dopplerfreq = kdeltafreq 
+	adown, aup freqshift aSource, kdeltafreq*0.5, 1
+	aDigL = adown
+	aDigR = aup
+	
+skip_shift:
 
 	; --- comb ---
-	kdelL = 0.01  + gk_v0post * 0.0023
-	kdelR = 0.005 + gk_v1post * 0.0023
+	itab_speed2ringenv ftgen 0, 0, -2000, -27, 0,0,   2,0,  16,0.01,  30,1,  400,1, 2000,1
 	
-	kfback = tablei(gk_freq, itab_speed2fback)*tablei(ksourceampdb, itab_sourceamp2fbackmult)
+	kmaxlevel = gk_v0post+gk_v1post
+	kphasecontrast = scale(gk_phasewet, 0.0009, 0.0005)
 	
-	aphL  = fbcomb(aDigL, kfback, kdelL)   // fbcomb(ain, kfback, kdel)
-	aDigL = ntrpol(aDigL, aphL, gk_phasewet) * gk_v0post
-
-	aphR  = fbcomb(aDigR, kfback, kdelR)
-	aDigR = ntrpol(aDigR, aphR, gk_phasewet) * gk_v1post
+	kdelL = gk_v0post/kmaxlevel*kphasecontrast + 0.005
+	kdelR = gk_v1post/kmaxlevel*kphasecontrast + 0.002// + kavgdiff*0.005 + 0.005
+	kdelL = max(kdelL, 0.0009)
+	kdelR = max(kdelR, 0.0009)
+	kdelL = port(kdelL, 0.001)
+	kdelR = port(kdelR, 0.001)
+	
+	itab_speed2fback   ftgen 0, 0, -1000, -27, 0,0.85, 40,0.85, 120,0.91, 300,0.9999,1000,.9999
+	kfback = tablei(gk_freq, itab_speed2fback)
+	kfback *= scale(gk_phasewet, 0.99, 0.85)
+	
+	aphL  = fbcombx(aDigL, kfback, kdelL)
+	aphR  = fbcombx(aDigR, kfback, kdelR)	
+	
+	kcross = port(gk_phasewet, 0.005)
+	aDigL = ntrpol(aDigL, aphL, kcross) * interp(gk_v0post)
+	aDigR = ntrpol(aDigR, aphR, kcross) * interp(gk_v1post)
 	
 	; --- RINGMOD BOOST ---
 	kringfreq = port(gk_freq*gk_freqmult, 0.005)
@@ -549,25 +799,30 @@ instr Audio
 	aup, adown freqshift aOutR, kringfreq, 1
 	aRingR = ntrpol(aup, adown, gk_ringspread) * kringenv
 	
-	aOutL = ntrpol(aOutL, aRingL, gk_ringmod)
-	aOutR = ntrpol(aOutR, aRingR, gk_ringmod)
+	kcross = port(gk_ringmod, 0.005)
+	aOutL = ntrpol(aOutL, aRingL, kcross)
+	aOutR = ntrpol(aOutR, aRingR, kcross)
 	
 	; ---- control feedback resonance ---- 
 	aOutM = (aOutL+aOutR)*0.70710678117
 	kamp = pow(max_k(aOutM, metro(20), 1), 2)
-	kspeedindex = pow(limit(gk_freq/150, 0, 1), 0.5)
+	kspeedindex = pow(limit(gk_freq/200, 0, 1), 0.5)
 	kfdn_cutoff   = port(scale(kamp, 12000, 4000), 0.005)
 	kfdn_freq     = port(scale(kspeedindex, 0.3, 0.1), 0.01)
 	kfdn_pitchmod = port(scale(kspeedindex, 0.5, 0.05), 0.005)
 	
 	// fdn(ain, kgain, kdelaytime, kcutoff, kfreq, kpitchmod, i_tapmix, i_delratio, i_delmin, i_delmax, i_cutoffdev) : a
-	aWetL = fdn(aOutL, gk_feedback, 0.15, kfdn_cutoff, kfdn_freq, kfdn_pitchmod, 0.3, 1, 0.063, 0.091)
-	aWetR = fdn(aOutR, gk_feedback, 0.15, kfdn_cutoff, kfdn_freq, kfdn_pitchmod, 0.3, 1, 0.063, 0.091)
+	kfback = port(gk_feedback, 0.01)
+	
+	aWetL = fdn(aOutL, kfback, 0.15, kfdn_cutoff, kfdn_freq, kfdn_pitchmod, 0.3, 1, 0.063, 0.091)
+	aWetR = fdn(aOutR, kfback, 0.15, kfdn_cutoff, kfdn_freq, kfdn_pitchmod, 0.3, 1, 0.063, 0.091)
 
-	aOutL ntrpol aOutL, aWetL, gk_feedbackwet
-	aOutR ntrpol aOutR, aWetR, gk_feedbackwet
-	aOutL *= interp(gk_mastergain)
-	aOutR *= interp(gk_mastergain)
+	kcross = port(gk_feedbackwet, 0.01)
+	aOutL ntrpol aOutL, aWetL, kcross
+	aOutR ntrpol aOutR, aWetR, kcross
+	
+	aOutL *= gk_mastergain
+	aOutR *= gk_mastergain
 
 	; -- limiter --
 	aOutL = compress(aOutL, aOutL, 0, 87, 93, 100, 0.001, 0.010, 0.004)
@@ -580,14 +835,38 @@ instr Audio
 	
 	outch 1, aOutL
 	outch 2, aOutR
+	
 endin
 
 ;; --------------------------------------------------------------
-instr $TestAudioOut
-	asigL oscili 0.5, 440
-	asigR oscili 0.5, 263
-	outch 1, asigL
-	outch 2, asigR
+instr $SimulateSource
+	imode = p4
+	if (imode == 1) then
+		imode = 0
+		isin = 0
+	elseif (imode == 2) then 
+		imode = 10		
+		isin = 0
+	elseif (imode == 3) then 
+		imode = 12
+		isin = 0
+	elseif (imode == 4) then
+		imode = 0
+		isin = 1
+	endif
+	kfreq0 = port(gk_testfreq, 0.005)
+	kfreq1 = kfreq0*semitone(gk_testinterval)
+	aenv = adsr(0.1, 0, 1, 0.1)*port(gk_testamp, 0.005)
+	asin0 oscili 1, kfreq0
+	asin1 oscili 1, kfreq1
+	avco0 vco2 1, kfreq0, imode
+	avco1 vco2 1, kfreq1, imode
+	kosc2gain = gk_testinterval == 0 ? 0 : 1
+	avco0 = (avco0 + avco1*kosc2gain)*0.707
+	asin0 = (asin0 + asin1*kosc2gain)*0.707
+	
+	aout ntrpol avco0, asin0, isin
+	outch $SIMULATE_OUTCHANNEL, aout*aenv
 endin
 
 instr $End
@@ -607,7 +886,8 @@ i "Brain" 0 36000
 i "Audio" 1 36000
 i "FlushSerialRegularly" 1 36000
 i "UI_osc" 0 36000
-i 2 0 0.1 32000 1  // flush this number of characters at the beginning of the performance
+i "PostInit" 1 0.01
+i 2 0 0.1 32000 1  ;; flush this number of characters at the beginning of the performance
 e 
 </CsScore>
 </CsoundSynthesizer>
