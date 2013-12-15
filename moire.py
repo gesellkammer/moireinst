@@ -217,7 +217,6 @@ class Manager(object):
             pass
         exit()
 
-
 if __name__ == '__main__':
     arduino = find_arduino()
     cs_arduino = "--omacro:ARDUINO={arduino}".format(arduino=arduino)

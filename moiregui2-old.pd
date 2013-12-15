@@ -1,0 +1,649 @@
+#N canvas 1174 55 456 494 10;
+#X declare -lib cyclone;
+#X declare -lib iemlib;
+#X declare -path pd;
+#X obj 287 -9 nbx 3 20 0 100 0 1 ui-gate0-send ui-gate0-recv empty
+0 -8 1 16 -262144 -39609 -262144 41 256;
+#X obj 287 -31 nbx 3 20 -90 0 0 1 ui-gate1-send ui-gate1-recv empty
+0 -8 1 16 -262144 -39609 -262144 -29 256;
+#X obj 191 28 hsl 100 9 0.01 1 1 0 _ masterL empty -2 -8 0 10 -128992
+-4034 -1 0 1;
+#X obj 191 38 hsl 100 9 0.01 1 1 0 _ masterR empty -2 -8 0 10 -128992
+-4034 -1 0 1;
+#X obj 106 27 nbx 4 20 -99 12 0 1 ui-mastergaindb-send ui-mastergaindb-recv
+empty 0 -8 1 16 -262144 -39609 -162280 0 256;
+#X text 187 12 MASTER;
+#X floatatom 295 29 5 0 0 0 - masterdb _;
+#X floatatom 157 -136 5 0 0 0 POST vusourcedb _;
+#X obj 268 56 cnv 15 154 140 empty empty empty 20 12 0 14 -162280 -66577
+0;
+#N canvas 51 122 655 400 HELP 0;
+#X text 9 8 This is the user interface for MOIRE;
+#X text 16 33 You dont need to turn DSP on \, since audio is processed
+externally. This is only a user interface.;
+#X text 14 88 TO STOP: press the "STOP" button. Save the current state
+by pressing "CTRL-S" or go to File/Save. Then you can quit PD (CTRL-Q)
+;
+#X restore 271 174 pd HELP;
+#X obj 278 141 tgl 15 1 autosave-send autosave-recv AUTOSAVE 18 7 0
+9 -262144 -24198 -1 1 1;
+#X obj 170 31 tgl 16 0 ui-mute-send ui-mute-recv M 6 8 0 9 -262144
+-1 -1 0 1;
+#X text 339 -30 dB;
+#X obj 67 -31 nbx 3 20 -90 0 0 1 ana-gate-thresh-send ana-gate-thresh-recv
+empty 0 -8 1 16 -262144 -39609 -262144 -27 256;
+#X text 120 -30 dB;
+#X text 34 -30 GATE;
+#X obj 67 -9 nbx 3 20 0 100 0 1 ana-gate-exp-send ana-gate-exp-recv
+empty 0 -8 1 16 -262144 -39609 -262144 64 256;
+#X text 27 -9 CURVE;
+#X obj 2 56 cnv 15 264 140 empty empty empty 20 12 0 14 -203904 -66577
+0;
+#X obj 10 90 hsl 128 10 0.5 1 0 1 feedback-send feedback-recv |__fback
+64 5 1 10 -262144 -1 -1 0 1;
+#X obj 10 103 hsl 128 10 0 1 0 1 feedbackwet-send feedbackwet-recv
+|__fback-wet 64 5 1 10 -262144 -1 -1 0 1;
+#X obj 10 148 hsl 95 10 1 25 0 1 shift-send shift-recv shift 0 5 1
+10 -24198 -1 -1 2100 0;
+#X obj 10 116 hsl 128 10 0 1 0 1 phasewet-send phasewet-recv |__phase
+64 5 1 10 -262144 -1 -1 0 1;
+#X floatatom 73 64 3 0 1 0 FDN fader1-recv -;
+#X obj 10 129 hsl 128 10 0 100 0 1 ringmodboost-send ringmodboost-recv
+|__ringmod 64 5 1 10 -262144 -1 -1 0 1;
+#N canvas 1196 493 559 459 ADVANCED 0;
+#N canvas 306 342 872 557 guts 0;
+#X msg 453 234 set \$1;
+#X obj 453 184 r ui-inputknob-send;
+#X obj 453 254 s ui-inputnb-recv;
+#X obj 519 30 loadbang;
+#X obj 647 9 r dumpstate;
+#X msg 747 26 bang;
+#X obj 747 46 v g-mute;
+#X obj 747 67 s mute-send;
+#X msg 519 54 \; dumpstate bang \; isactive 0 \;;
+#X text 515 8 INIT;
+#N canvas 765 279 465 365 show-onoff-status 0;
+#X obj 90 74 change;
+#X obj -8 43 speedlim 2000;
+#X obj 90 9 r isactive;
+#X obj 185 10 r onoff;
+#X obj 185 39 select 0 1;
+#X obj 90 106 s onoff;
+#X msg 180 143 \; audiotoggle-recv set 0 \; audiotoggle-recv label
+OFF \; audiotoggle-recv color 13 22 22;
+#X msg 230 62 \; audiotoggle-recv set 1 \; audiotoggle-recv label ON
+\; audiotoggle-recv color 16 22 22;
+#X connect 0 0 5 0;
+#X connect 1 0 5 0;
+#X connect 2 0 0 0;
+#X connect 2 0 1 0;
+#X connect 3 0 4 0;
+#X connect 4 0 6 0;
+#X connect 4 1 7 0;
+#X restore 10 10 pd show-onoff-status;
+#N canvas 366 324 450 300 mute-control 0;
+#X obj 53 33 change;
+#X obj 53 62 select 0 1;
+#X msg 53 126 \; ui-mute-recv color 0 22 22;
+#X obj 53 8 r ui-mute-send;
+#X msg 86 87 \; ui-mute-recv color 13 13 22;
+#X connect 0 0 1 0;
+#X connect 1 0 2 0;
+#X connect 1 1 4 0;
+#X connect 3 0 0 0;
+#X restore 10 34 pd mute-control;
+#X obj 9 266 r diggainL-send;
+#X obj 9 288 * 100;
+#X obj 9 308 int;
+#X obj 11 387 * 100;
+#X obj 11 407 int;
+#X obj 11 365 r diggainR-send;
+#X msg 647 308 \; stereomagn-recv bang \; ringmodboost-recv bang \;
+ui-mastergaindb-recv bang \; ui-gate1-recv bang \; ui-gate0-recv bang
+\; ui-minvar-recv bang \; ui-smooth-recv bang \; ui-speed-recv bang
+\; diggainL-recv bang \; diggainR-recv bang \; gaindigpre-recv bang
+\; gaindigpost-recv bang \; ampcurve-recv bang \; smoothgain-recv bang
+\;;
+#X obj 361 349 r test-freq;
+#X obj 361 369 ftom;
+#X msg 371 391 \; test-midinote-recv set \$1;
+#X obj 397 449 mtof;
+#X obj 397 469 s test-freq-recv;
+#X obj 397 427 r test-midinote-send;
+#X obj 361 482 mton;
+#X obj 361 503 s test-notename;
+#X obj 10 121 r quit-send;
+#X obj 30 143 s savepatch;
+#X msg 10 208 \; pd quit;
+#X obj 10 186 delay 2000;
+#X obj 20 165 s quit-osc-manager;
+#X msg 647 93 \; ringspread-recv bang \; feedbackwet-recv bang \; feedback-recv
+bang \; gainanalog-recv bang \; feedbackwet-recv bang \; feedback-recv
+bang \; phasewet-recv bang \; gainanalogpost-recv bang \; ana-gate-thresh-recv
+bang \; ana-gate-exp-recv bang \; autosave-sec-recv bang \;;
+#N canvas 916 486 450 300 autosave 0;
+#X msg 26 34 menusave;
+#X obj 26 54 s pd-moiregui2.pd;
+#X obj 26 15 r savepatch;
+#X obj 200 12 r autosave-send;
+#X obj 200 92 metro 20000;
+#X obj 200 116 s savepatch;
+#X obj 263 37 r autosave-sec-recv;
+#X obj 263 59 * 1000;
+#X connect 0 0 1 0;
+#X connect 2 0 0 0;
+#X connect 3 0 4 0;
+#X connect 4 0 5 0;
+#X connect 6 0 7 0;
+#X connect 7 0 4 1;
+#X restore 10 56 pd autosave;
+#X obj 205 97 change;
+#X obj 205 147 s dumpstate;
+#X obj 205 11 r samplerate;
+#X obj 225 67 s isactive;
+#X obj 205 123 select 1;
+#N canvas 1113 81 515 441 isactive 0;
+#X obj 157 38 inlet;
+#X obj 168 302 outlet;
+#X obj 127 120 timer;
+#X obj 260 16 loadbang;
+#X text 155 16 samplerate;
+#X obj 168 179 !*;
+#X obj 218 145 > 100;
+#X obj 177 208 select 0;
+#X obj 177 256 s ui-samplerate-recv;
+#X msg 177 232 -1;
+#X obj 127 74 t b b;
+#X obj 127 145 < 800;
+#X obj 127 97 delay 3;
+#X obj 260 39 metro 1000;
+#X connect 0 0 10 0;
+#X connect 0 0 6 0;
+#X connect 2 0 11 0;
+#X connect 3 0 13 0;
+#X connect 5 0 1 0;
+#X connect 5 0 7 0;
+#X connect 6 0 5 1;
+#X connect 7 0 9 0;
+#X connect 9 0 8 0;
+#X connect 10 0 12 0;
+#X connect 10 1 2 1;
+#X connect 11 0 5 0;
+#X connect 12 0 2 0;
+#X connect 13 0 10 0;
+#X restore 205 37 pd isactive;
+#X obj 325 79 timer;
+#X obj 325 28 t b b;
+#X obj 342 105 s update-period;
+#X obj 305 55 delay 2;
+#X obj 339 240 s guirate;
+#X obj 325 129 t b f;
+#X obj 339 179 /;
+#X msg 325 154 1000;
+#X obj 339 220 int;
+#X obj 339 200 smooth 0.2;
+#X obj 453 209 amp2db;
+#X msg 11 435 \; diggainR-recv label ............|............\$1%
+;
+#X msg 9 327 \; diggainL-recv label ............|............\$1%;
+#X connect 0 0 2 0;
+#X connect 1 0 50 0;
+#X connect 3 0 8 0;
+#X connect 4 0 32 0;
+#X connect 4 0 5 0;
+#X connect 4 0 18 0;
+#X connect 5 0 6 0;
+#X connect 6 0 7 0;
+#X connect 12 0 13 0;
+#X connect 13 0 14 0;
+#X connect 14 0 52 0;
+#X connect 15 0 16 0;
+#X connect 16 0 51 0;
+#X connect 17 0 15 0;
+#X connect 19 0 20 0;
+#X connect 20 0 21 0;
+#X connect 20 0 25 0;
+#X connect 22 0 23 0;
+#X connect 24 0 22 0;
+#X connect 24 0 25 0;
+#X connect 25 0 26 0;
+#X connect 27 0 28 0;
+#X connect 27 0 30 0;
+#X connect 27 0 31 0;
+#X connect 30 0 29 0;
+#X connect 34 0 38 0;
+#X connect 36 0 39 0;
+#X connect 36 0 41 0;
+#X connect 38 0 35 0;
+#X connect 39 0 37 0;
+#X connect 39 0 34 0;
+#X connect 40 0 42 0;
+#X connect 40 0 45 0;
+#X connect 41 0 43 0;
+#X connect 41 1 40 1;
+#X connect 43 0 40 0;
+#X connect 45 0 47 0;
+#X connect 45 1 46 1;
+#X connect 46 0 49 0;
+#X connect 47 0 46 0;
+#X connect 48 0 44 0;
+#X connect 49 0 48 0;
+#X connect 50 0 0 0;
+#X restore 256 -171 pd guts;
+#N canvas 1501 91 450 300 pathsandlibs 0;
+#X obj 28 19 import cyclone;
+#X obj 28 41 import iemlib;
+#X obj 26 74 declare -path pd;
+#X restore 362 -171 pd pathsandlibs;
+#N canvas 1158 287 728 321 osc 0;
+#X obj 232 8 s ui-inputknob-recv;
+#X obj 15 12 dumpOSC 30019;
+#X obj 232 -42 r inputgain;
+#X obj 567 -41 r samplerate;
+#X obj 567 -18 s ui-samplerate-recv;
+#X obj 384 9 s ui-measuredspeed-recv;
+#X obj 384 -42 r measuredspeed;
+#X obj 384 -18 int;
+#X obj 350 46 r vuanalogL;
+#X obj 449 46 r vuanalogR;
+#X obj 378 130 s vuanalogdb;
+#X obj 565 47 r v0post;
+#X obj 632 47 r v1post;
+#X obj 572 82 amp2db_st;
+#X obj 572 129 s vudigitaldb;
+#X obj 378 103 int;
+#X obj 572 105 int;
+#X obj 378 78 amp2db_st;
+#N canvas 427 290 1299 847 send 0;
+#X obj 227 454 r ui-speed-send;
+#X obj 215 606 sendOSC;
+#X msg 22 -14 connect localhost 30018;
+#X obj 22 -35 loadbang;
+#X msg 217 478 send /speedperiod_ms \$1;
+#X obj 227 341 r ui-smooth-send;
+#X msg 217 365 send /smooth_ms \$1;
+#X obj 227 398 r ui-minvar-send;
+#X msg 217 422 send /minvariation \$1;
+#X obj 230 -48 r ui-gate0-send;
+#X obj 227 101 r ui-gate1-send;
+#X obj 230 53 r ui-mastergaindb-send;
+#X msg 220 78 send /mastergaindb \$1;
+#X obj 227 234 r ui-mute-send;
+#X msg 220 28 send /stereomagnify \$1;
+#X msg 217 312 send /mastermute \$1;
+#X msg 217 203 send /ringmodboost \$1;
+#X obj 227 154 r ringmodboost-send;
+#X obj 230 4 r stereomagn-send;
+#X obj 227 260 v g-mute;
+#X obj 227 285 r mute-send;
+#X obj 227 178 / 100;
+#X obj 22 55 r gainanalog-send;
+#X obj 22 75 db2amp;
+#X msg 22 95 send /gainanalog \$1;
+#X obj 22 146 db2amp;
+#X obj 22 206 r ringspread-send;
+#X msg 22 226 send /ringspread \$1;
+#X obj 22 262 r diggainL-send;
+#X msg 22 284 send /diggainL \$1;
+#X obj 22 319 r diggainR-send;
+#X msg 22 340 send /diggainR \$1;
+#X obj 22 395 r feedback-send;
+#X msg 22 418 send /feedback \$1;
+#X msg 22 476 send /feedbackwet \$1;
+#X obj 22 452 r feedbackwet-send;
+#X obj 265 580 r osc-send;
+#X obj 22 586 t a;
+#X obj 448 586 t a;
+#X obj 455 11 r phasewet-send;
+#X msg 455 33 send /phasewet \$1;
+#X obj 462 65 r gainanalogpost-send;
+#X msg 462 118 send /gainanalogpost \$1;
+#X obj 462 91 db2amp;
+#X obj 474 151 r ana-gate-thresh-send;
+#X msg 474 175 send /anagatethreshdb \$1;
+#X obj 488 203 r ana-gate-exp-send;
+#X msg 487 227 send /anagateexp \$1;
+#X obj 512 259 r test-mode;
+#X obj 538 279 r test-freq;
+#X obj 562 299 r test-gain;
+#X obj 587 320 r test-interval;
+#X msg 512 377 send /testaudio \$1 \$2 \$3 \$4;
+#X obj 448 -35 r shift-send;
+#X msg 448 -12 send /shift \$1;
+#X msg 219 125 send /gatedig1 \$1;
+#X msg 220 -24 send /gatedig0 \$1;
+#X obj 534 431 db2amp;
+#X obj 22 126 r gaindigpost-send;
+#X msg 22 166 send /gaindigpost \$1;
+#X obj 534 406 r gaindigpre-send;
+#X msg 534 455 send /gaindigpre \$1;
+#X obj 549 491 r ampcurve-send;
+#X obj 600 517 r smoothgain-send;
+#X obj 549 545 pack2 f f;
+#X msg 549 568 send /smoothing \$1 \$2;
+#X obj 512 347 pack4 f f f f;
+#X obj 657 -42 r audiotoggle-send;
+#X obj 669 -19 s onoff;
+#X obj 657 4 select 0 1;
+#X obj 821 11 sendOSC;
+#X obj 821 -36 loadbang;
+#X msg 821 -13 connect localhost 30020;
+#X msg 685 55 send /startcsound 1;
+#X obj 873 11 r to-osc-manager;
+#X obj 825 80 r quit-osc-manager;
+#X msg 825 102 send /quit 1;
+#X msg 657 29 send /stopcsound 1;
+#X obj 658 132 s to-osc-manager;
+#X connect 0 0 4 0;
+#X connect 2 0 37 0;
+#X connect 3 0 2 0;
+#X connect 4 0 1 0;
+#X connect 5 0 6 0;
+#X connect 6 0 1 0;
+#X connect 7 0 8 0;
+#X connect 8 0 1 0;
+#X connect 9 0 56 0;
+#X connect 10 0 55 0;
+#X connect 11 0 12 0;
+#X connect 12 0 1 0;
+#X connect 13 0 19 0;
+#X connect 13 0 15 0;
+#X connect 14 0 1 0;
+#X connect 15 0 1 0;
+#X connect 16 0 1 0;
+#X connect 17 0 21 0;
+#X connect 18 0 14 0;
+#X connect 20 0 15 0;
+#X connect 21 0 16 0;
+#X connect 22 0 23 0;
+#X connect 23 0 24 0;
+#X connect 24 0 37 0;
+#X connect 25 0 59 0;
+#X connect 26 0 27 0;
+#X connect 27 0 37 0;
+#X connect 28 0 29 0;
+#X connect 29 0 37 0;
+#X connect 30 0 31 0;
+#X connect 31 0 37 0;
+#X connect 32 0 33 0;
+#X connect 33 0 37 0;
+#X connect 34 0 37 0;
+#X connect 35 0 34 0;
+#X connect 36 0 1 0;
+#X connect 37 0 1 0;
+#X connect 38 0 1 0;
+#X connect 39 0 40 0;
+#X connect 40 0 38 0;
+#X connect 41 0 43 0;
+#X connect 42 0 38 0;
+#X connect 43 0 42 0;
+#X connect 44 0 45 0;
+#X connect 45 0 38 0;
+#X connect 46 0 47 0;
+#X connect 47 0 38 0;
+#X connect 48 0 66 0;
+#X connect 49 0 66 1;
+#X connect 50 0 66 2;
+#X connect 51 0 66 3;
+#X connect 52 0 38 0;
+#X connect 53 0 54 0;
+#X connect 54 0 38 0;
+#X connect 55 0 1 0;
+#X connect 56 0 1 0;
+#X connect 57 0 61 0;
+#X connect 58 0 25 0;
+#X connect 59 0 37 0;
+#X connect 60 0 57 0;
+#X connect 61 0 38 0;
+#X connect 62 0 64 0;
+#X connect 63 0 64 1;
+#X connect 64 0 65 0;
+#X connect 65 0 38 0;
+#X connect 66 0 52 0;
+#X connect 67 0 68 0;
+#X connect 67 0 69 0;
+#X connect 69 0 77 0;
+#X connect 69 1 73 0;
+#X connect 71 0 72 0;
+#X connect 72 0 70 0;
+#X connect 73 0 78 0;
+#X connect 74 0 70 0;
+#X connect 75 0 76 0;
+#X connect 76 0 78 0;
+#X connect 77 0 78 0;
+#X restore 15 -38 pd send;
+#N canvas 644 345 450 300 route_preset 0;
+#X obj 37 20 inlet;
+#X msg 37 241 set \$1;
+#X msg 64 183 set \$1;
+#X obj 37 267 s feedback-recv;
+#X obj 64 211 s feedbackwet-recv;
+#X msg 98 83 set \$1;
+#X obj 98 108 s phasewet-recv;
+#X msg 236 116 set \$1;
+#X obj 235 91 * 100;
+#X obj 236 141 s ringmodboost-recv;
+#X obj 37 47 unpack f f f f f;
+#X obj 259 64 s shifton-recv;
+#X connect 0 0 10 0;
+#X connect 1 0 3 0;
+#X connect 2 0 4 0;
+#X connect 5 0 6 0;
+#X connect 7 0 9 0;
+#X connect 8 0 7 0;
+#X connect 10 0 1 0;
+#X connect 10 1 2 0;
+#X connect 10 2 5 0;
+#X connect 10 3 8 0;
+#X connect 10 4 11 0;
+#X restore 87 165 pd route_preset;
+#N canvas 4 223 673 620 route_info 0;
+#X obj 49 36 inlet;
+#X obj 103 460 s v0pre;
+#X obj 121 439 s v1pre;
+#X obj 139 410 s v0post;
+#X obj 162 386 s v1post;
+#X obj 67 520 s ui-mix-recv;
+#X obj 221 229 s vusource;
+#X obj 175 313 s masterL;
+#X obj 193 280 s masterR;
+#X obj 175 361 s masterdb;
+#X obj 211 254 rmstodb;
+#X obj 300 274 - 100;
+#X obj 300 321 s vusourcedb;
+#X obj 229 193 s samplerate;
+#X obj 87 492 s inputgain;
+#X obj 49 547 s measuredspeed;
+#X obj 247 164 s vuanalogL;
+#X obj 265 138 s vuanalogR;
+#X obj 175 337 amp2db_st;
+#X obj 300 298 int;
+#X obj 341 207 s vusourcepre;
+#X obj 552 247 s fader1-recv;
+#X obj 478 444 s strain-recv;
+#X obj 49 81 unpack f f f f f f f f f f f f f f f f f;
+#X obj 353 113 s dopplerfreq;
+#X obj 341 183 amp2db;
+#X connect 0 0 23 0;
+#X connect 10 0 11 0;
+#X connect 11 0 19 0;
+#X connect 18 0 9 0;
+#X connect 19 0 12 0;
+#X connect 23 0 15 0;
+#X connect 23 1 5 0;
+#X connect 23 2 14 0;
+#X connect 23 3 1 0;
+#X connect 23 4 2 0;
+#X connect 23 5 3 0;
+#X connect 23 6 4 0;
+#X connect 23 7 7 0;
+#X connect 23 7 18 0;
+#X connect 23 8 8 0;
+#X connect 23 8 18 1;
+#X connect 23 9 6 0;
+#X connect 23 9 10 0;
+#X connect 23 10 13 0;
+#X connect 23 11 16 0;
+#X connect 23 12 17 0;
+#X connect 23 13 25 0;
+#X connect 23 14 21 0;
+#X connect 23 15 22 0;
+#X connect 23 16 24 0;
+#X connect 25 0 20 0;
+#X restore 18 206 pd route_info;
+#N canvas 140 201 450 300 route_buttons 0;
+#X obj 49 38 inlet;
+#X obj 51 81 unpack f f;
+#X obj 110 143 select 0 1;
+#X msg 110 183 \; shift-recv color 10 12 22 \;;
+#X msg 151 246 \; shift-recv color 16 22 22 \;;
+#X connect 0 0 1 0;
+#X connect 1 1 2 0;
+#X connect 2 0 3 0;
+#X connect 2 1 4 0;
+#X restore 137 130 pd route_buttons;
+#X obj 15 38 OSCroute /info /preset /buttons /ping;
+#N canvas 1143 520 450 300 pingback 0;
+#X obj 54 6 inlet;
+#X msg 189 95 connect localhost \$1;
+#X obj 179 157 sendOSC;
+#X msg 179 62 disconnect;
+#X obj 54 32 t b f b;
+#X msg 48 106 send /pingback;
+#X obj 48 82 pipe 1;
+#X connect 0 0 4 0;
+#X connect 1 0 2 0;
+#X connect 3 0 2 0;
+#X connect 4 0 6 0;
+#X connect 4 1 1 0;
+#X connect 4 2 3 0;
+#X connect 5 0 2 0;
+#X connect 6 0 5 0;
+#X restore 207 92 pd pingback;
+#X obj 232 -18 amp2db;
+#X connect 1 0 22 0;
+#X connect 2 0 24 0;
+#X connect 3 0 4 0;
+#X connect 6 0 7 0;
+#X connect 7 0 5 0;
+#X connect 8 0 17 0;
+#X connect 9 0 17 1;
+#X connect 11 0 13 0;
+#X connect 12 0 13 1;
+#X connect 13 0 16 0;
+#X connect 15 0 10 0;
+#X connect 16 0 14 0;
+#X connect 17 0 15 0;
+#X connect 22 0 20 0;
+#X connect 22 1 19 0;
+#X connect 22 2 21 0;
+#X connect 22 3 23 0;
+#X connect 24 0 0 0;
+#X restore 313 -171 pd osc;
+#X obj 134 -76 hsl 128 10 0 1 0 1 ringspread-send ringspread-recv |
+64 5 1 10 -262144 -1 -1 7800 1;
+#X text 22 -79 RINGMOD - SPREAD;
+#X text 37 -41 DIGITAL GAIN L;
+#X obj 134 -40 hsl 128 15 0 2 0 1 diggainL-send diggainL-recv ............|............100%
+28 8 1 10 -3381 -262144 -1 6400 1;
+#X obj 134 -20 hsl 128 15 0 2 0 1 diggainR-send diggainR-recv ............|............100%
+28 8 1 10 -3381 -262144 -1 6400 1;
+#X text 115 -21 R;
+#X obj 11 -147 nbx 5 15 -1e+37 1e+37 0 0 empty ui-samplerate-recv samplerate
+0 -6 0 8 -233017 -33289 -1 -1 256;
+#X obj 11 -115 nbx 5 15 -1e+37 1e+37 0 0 empty guirate guirate 0 -6
+0 8 -233017 -33289 -1 0 256;
+#X text 8 -177 DEBUG;
+#X obj 134 14 hsl 128 10 1 5 0 1 stereomagn-send stereomagn-recv empty
+-2 -8 0 10 -262144 -1 -1 1500 1;
+#X floatatom 131 26 5 0 100 0 - - -;
+#X text 10 12 STEREO MAGNIFY (X);
+#X text 13 89 SPEED ANALYSIS WINDOW (ms);
+#X text 97 119 SMOOTHING (ms);
+#X obj 205 88 nbx 3 20 5 120 0 1 ui-speed-send ui-speed-recv empty
+0 -8 1 16 -262144 -39609 -1 27 256;
+#X obj 205 119 nbx 3 20 1 100 0 1 ui-smooth-send ui-smooth-recv empty
+0 -8 1 16 -262144 -39609 -1 6 256;
+#X text 103 150 MIN VARIATION;
+#X obj 205 150 nbx 4 20 0 1 0 1 ui-minvar-send ui-minvar-recv empty
+0 -8 1 16 -262144 -39609 -1 0.05 100;
+#X floatatom 205 187 5 0 800 0 - ui-measuredspeed-recv ui-measuredspeed-send
+;
+#X text 62 186 MEASURED SPEED (Hz);
+#X obj 339 -42 nbx 4 20 0.01 20 0 1 ampcurve-send ampcurve-recv empty
+0 -8 1 16 -262144 -39609 -1 3 100;
+#X floatatom 267 -40 4 0 0 0 - v0post -;
+#X floatatom 267 -20 4 0 0 0 - v1post -;
+#X obj 338 -18 nbx 4 20 0.01 20 0 1 smoothgain-send smoothgain-recv
+empty 0 -8 1 16 -262144 -39609 -1 1.8 100;
+#X text 401 -17 SMOOTH COMPENSATE GAIN;
+#X text 401 -36 SMOOTH CURVE;
+#X floatatom 205 217 4 0 0 0 Doppler-Freq dopplerfreq -;
+#X floatatom 85 -116 5 0 0 0 - autosave-sec-recv autosave-sec-send
+;
+#X text 120 -116 Autosave Period;
+#X text 3 -104 _________________________________________;
+#X text 247 -104 _________________________________________;
+#X connect 12 0 13 0;
+#X restore 339 174 pd ADVANCED;
+#X obj 107 148 nbx 3 10 -1e+37 1e+37 0 0 \$0-_ shift-send empty 0 -8
+0 9 -262144 -1 -1 6.3617 256;
+#X text 249 -8 CURVE;
+#X text 256 -30 GATE;
+#X floatatom 27 -136 5 0 0 0 PRE vusourcepre #0-_;
+#X obj 28 -260 vu 14 120 vusourcepre empty -1 -8 0 10 -66577 -262144
+1 0;
+#X obj 158 -260 vu 14 120 vusourcedb empty -1 -8 0 9 -66577 -262144
+1 0;
+#X obj 82 -237 vsl 30 50 -60 0 0 0 empty ui-inputknob-recv PED 0 -9
+0 9 -1 -258113 -1 0 1;
+#X obj 82 -184 nbx 3 14 -99 99 0 0 empty ui-inputknob-recv empty 0
+-8 0 9 -99865 -262144 -1 0 256;
+#X obj 242 -264 cnv 15 160 140 empty empty PRACTICE 4 9 1 9 -232576
+-1 0;
+#X obj 255 -244 vradio 15 1 0 5 test-mode empty empty 0 -8 0 10 -262144
+-1 -1 0;
+#X text 272 -248 OFF;
+#X text 272 -217 SQR;
+#X text 272 -231 SAW;
+#X text 272 -201 TRI;
+#X text 272 -185 SIN;
+#X obj 314 -140 hsl 49 8 0.01 1 1 1 test-gain empty gain -2 -8 0 10
+-262144 -159808 -1 3000 1;
+#X obj 311 -242 nbx 5 16 8 12000 1 1 test-freq test-freq-recv freq
+0 -8 0 10 -262144 -159808 -1 40 256;
+#X obj 311 -171 nbx 5 14 0 12 0 1 test-interval empty interval 0 -8
+0 10 -262144 -159808 -1 0 256;
+#X obj 77 -152 hsl 49 8 0.01 1 0 1 empty strain-recv strain 4 -6 0
+10 -262144 -159808 -1 0 1;
+#X obj 2 -114 cnv 15 400 76 empty empty empty 20 12 0 14 -162280 -66577
+0;
+#X obj 28 -91 hsl 128 9 0.01 1 1 0 _ vuanalogL empty -2 -8 0 10 -33289
+-4034 -1 0 1;
+#X obj 28 -81 hsl 128 9 0.01 1 1 0 _ vuanalogR empty -2 -8 0 10 -33289
+-4034 -1 0 1;
+#X obj 249 -92 hsl 128 9 0.01 1 1 0 _ v0post empty -2 -8 0 10 -33289
+-126974 -1 0 1;
+#X obj 249 -82 hsl 128 9 0.01 1 1 0 _ v1post empty -2 -8 0 10 -33289
+-126974 -1 0 1;
+#X text 243 -109 DIG;
+#X text 22 -108 ANA;
+#X floatatom 126 -108 5 0 0 0 - vuanalogdb _;
+#X floatatom 347 -109 5 0 0 0 - vudigitaldb _;
+#X obj 25 -68 nbx 3 13 -48 48 0 1 gainanalog-send gainanalog-recv pregate(dB)
+0 20 1 10 -99865 -262144 -66577 -17 256;
+#X obj 350 -69 nbx 3 13 -48 48 0 1 gaindigpost-send gaindigpost-recv
+postgate(dB) -25 20 1 10 -99865 -262144 -66577 12 256;
+#X obj 130 -68 nbx 3 13 -48 48 0 1 gainanalogpost-send gainanalogpost-recv
+postgate(dB) -25 20 1 10 -99865 -262144 -66577 15 256;
+#X obj 246 -69 nbx 3 13 -48 48 0 1 gaindigpre-send gaindigpre-recv
+pregate(dB) 0 20 1 10 -99865 -262144 -66577 -12 256;
+#X obj 179 -92 hsl 50 19 0 1 0 0 ui-mix-send ui-mix-recv empty -2 -8
+0 10 -1 -257985 -1 0 1;
+#X obj 311 -206 nbx 4 16 8 12000 1 1 test-midinote-send test-midinote-recv
+midinote 0 -8 0 10 -262144 -159808 -1 27.4868 256;
+#X symbolatom 361 -206 5 0 0 0 - test-notename -;
+#X obj 375 90 bng 32 250 50 0 quit-send empty QUIT -1 -6 1 13 -258699
+-1 -1;
+#X obj 278 90 tgl 32 0 audiotoggle-send audiotoggle-recv OFF -1 -6
+1 13 -258699 -1 -1 0 1;
