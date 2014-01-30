@@ -5,6 +5,7 @@ import subprocess
 import time 
 import liblo
 import os
+import serial
 
 LINUX_AUDIOINTERFACE = "Komplete"
 CSOUNDPATCH = "moire.csd"
@@ -13,6 +14,8 @@ PDAPP = "/Applications/Pd-0.44"
 CSPORT = 30018
 PDPORT = 30019
 MANAGERPORT = 30020
+LAMPPORT = 11111
+RUNLAMP = False
 
 if sys.platform == 'darwin':
     DARWIN = True
@@ -21,11 +24,34 @@ if sys.platform == 'linux2':
     LINUX = True
     DARWIN = False
 
+def _is_moire_arduino(dev, timeout=3):
+    try:
+        s = serial.Serial(dev, timeout=0.5)
+    except OSError:
+        return False
+    t0 = time.time()
+    while time.time() - t0 < timeout:
+        c = s.read(1)
+        if not c:
+            continue
+        c = ord(c)
+        if c < 128:
+            continue
+        if c == 200:
+            return True
+    return False
+    
 def find_arduino():
     if DARWIN:
-        arduino = glob.glob("/dev/tty*usb*")
-        if arduino:
-            return arduino[0]
+        devs = glob.glob("/dev/tty*usb*")
+        for dev in devs:
+
+            if _is_moire_arduino(dev):
+                print "found moire device!", dev
+                return dev
+            else:
+                print "device %s is not the moire device" % dev
+        return None
     elif LINUX:
         arduino = glob.glob("/dev/*arduino*")
         if arduino:
@@ -137,6 +163,13 @@ def is_cs_running():
 def get_csound_status():
     return get_proc_status(CSPORT)
 
+def is_lamp_running():
+    try:
+        s = liblo.Server(LAMPPORT)
+    except liblo.ServerError:
+        return True
+    return False
+
 def check_csound_exit(starttime, exitmsg):
     endtime = time.time()
     if endtime - starttime < 5:
@@ -155,16 +188,28 @@ def launch_csound():
         csoundproc = subprocess.Popen(cmd.split())
         return csoundproc
 
+def launch_lamp():
+    if DARWIN:
+        cmd = " ".join(("python", "midilamp/midilamp.py"))
+        lampproc = subprocess.Popen(cmd.split())
+        return lampproc
+
 class Manager(object):
     def __init__(self):
+        self.lampproc = None
+        self.csoundproc = None
         if DARWIN:
             self.init_darwin()
         else:
             print "Not Implemented"
             exit()
     def init_darwin(self):
+        print "checking pd status"
+
         pd_status = get_pd_status()
+        #pd_status = "running"
         if pd_status == 'notrunning':
+            print "finding pd binary"
             pdbin = find_pd_binary()
             os.system("open ./{pdpatch}".format(pd=pdbin, pdpatch=PDPATCH))
         elif pd_status == 'unresponsive':
@@ -173,8 +218,12 @@ class Manager(object):
         if is_cs_running():
             print "Csound is already running. Exiting"
             exit()
+        print "launching csound"
         self.csoundproc = launch_csound()
         s = liblo.Server(MANAGERPORT)
+        if RUNLAMP and not is_lamp_running():
+            self.lampproc = launch_lamp()
+
         def start_csound(path, args):
             if not is_cs_running():
                 self.csoundproc = launch_csound()
@@ -190,6 +239,8 @@ class Manager(object):
             self.oscserver.send(CSPORT, '/stop', 1)
             if self.csoundproc is not None and self.csoundproc.poll():
                 self.csoundproc.kill()
+            if self.lampproc is not None and self.lampproc.poll():
+                self.lampproc.kill()
             self.running = False
         def stop_csound(path, args):
             self.oscserver.send(CSPORT, '/stop', 1)
@@ -230,7 +281,9 @@ if __name__ == '__main__':
         exit()
 
     if DARWIN:
+        print "creating Manager"
         man = Manager()
+        print "starting manager"
         man.run()
         print "finished Manager"
 

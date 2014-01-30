@@ -3,7 +3,7 @@
 -b256
 -B512
 // OSX
-// --omacro:ARDUINO=/dev/tty.usbmodemfd111
+--omacro:ARDUINO=/dev/tty.usbmodemfd121
 // --omacro:ARDUINO=/dev/tty.usbmodem1a21
 // --omacro:ARDUINO=/dev/tty.usbmodem1d11
 
@@ -11,20 +11,18 @@
 ;--omacro:ARDUINO=/dev/arduinoleo
 </CsOptions>
 <CsInstruments>
-
 // ksmps  = 16   // this equals a control samplerate of 2600 Hz at 44100
 ksmps  = 32      // this equals a control samplerate of 1300 Hz at 44100
-nchnls = 4
 0dbfs  = 1
 sr     = 44100
+nchnls = 4
 
 ;; ---------- CONFIG ----------
 
-;;;  AUDIO UI
 #define FROM_SOURCE #3#              
 #define FROM_MOIRE1 #1#
 #define FROM_MOIRE2 #2#   
-#define SIMULATE_OUTCHANNEL #4#            
+#define SIMULATE_OUTCHANNEL #4#
 
 ;;; OSC
 #define ADDR_HOST #"127.0.0.1"#
@@ -45,6 +43,8 @@ sr     = 44100
 #define USE_OUTPUT_LIMITER #1#
 #define FLUSHSERIALRATE #0.2#
 #define FLUSHSERIAL_NUMCHARS #100#
+#define LAMP_PORT #11111#
+#define LAMP_HOST #"127.0.0.1"#
 
 ;; ------ PRIVATE --------
 #define SAW #1#
@@ -102,6 +102,7 @@ gk_smoothcurve init 1
 gk_smoothgain  init 1
 gk_printtrig init 0
 gk_dopplerfreq init 0 
+gk_lightmax init 1
  
 giSerial serialBegin "$ARDUINO", 115200
 giOSC OSCinit $OSCPORT
@@ -347,6 +348,9 @@ exit:
 		gk_feedback, gk_feedbackwet, gk_phasewet, gk_ringmod
 	k_buttrig = changed(gk_but1, gk_but2) 
 	OSCsend k_buttrig, $ADDR_HOST, $ADDR_PORT, "/buttons", "ii", gk_but1, gk_but2
+	k_lightvalue = int(gk_volpedal * gk_lightmax * 1000)
+	k_lighttrig = changed(k_lightvalue)
+	OSCsend k_lighttrig, $LAMP_HOST, $LAMP_PORT, "/set", "i", k_lightvalue
 endin
 
 instr PostInit
@@ -402,6 +406,7 @@ instr UI_osc
 	k0 OSClisten giOSC, "/anagatethreshdb", "f", gk_anagatethreshdb
 	k0 OSClisten giOSC, "/anagateexp", 		"f", gk_anagateexp
 	k0 OSClisten giOSC, "/smoothing",       "ff", gk_smoothcurve, gk_smoothgain 
+	k0 OSClisten giOSC, "/lightmax",        "f", gk_lightmax 
 #ifdef SIMULATE_STRAIN
 	k0 OSClisten giOSC, "/strain", "f", kstrain
 #endif
@@ -453,7 +458,7 @@ endin
 instr CalculateSpeed
 	i_amptable ftgen 0, 0, -1001, 7,   0, 1, 0, 4, 0.001, 11, 0.063095734448, 4, 1, 980, 1
 	iperdur = ksmps/sr
-	kzeros0, kperiods, kfreq0_raw, kfreq1_raw init 0
+	kzeros0, kzeros1, kperiods, kfreq0_raw, kfreq1_raw init 0
 	kmin0, kmin1 init 1
 	kmax0, kmax1 init 0
 	kmin0_new, kmin1_new init 1

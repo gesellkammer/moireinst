@@ -14,13 +14,14 @@ PDPATCH="moiregui2.pd"
 
 mkdir -p $BUILDFOLDER
 rm -f $BUILDFOLDER/setup.py
-for f in $MAINPY $PDPATCH $CSDPATCH pd moire_firmware; do
+for f in $MAINPY $PDPATCH $CSDPATCH pd moire_firmware serial midilamp; do
 	cp -r $f $BUILDFOLDER/
 done
 
 pushd $BUILDFOLDER
 py2applet --make-setup $MAINPY $PDPATCH $CSDPATCH ../assets/icon.icns
-python setup.py py2app --resources pd,moire_firmware
+python setup.py py2app --resources pd,moire_firmware,serial,midilamp
 popd
 
-open "$BUILDFOLDER/dist"
+cp -r "$BUILDFOLDER/dist/moire.app" .
+
