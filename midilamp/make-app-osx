@@ -8,20 +8,19 @@ if [ -z $VIRTUAL_ENV ] ; then
 fi
 
 BUILDFOLDER="appbuild"
-#CSDPATCH="moire.csd"
-MAINPY="midilamp.py"
-# PDPATCH="moiregui2.pd"
+NAME=midilamp
+MAINPY=$NAME.py
 
 mkdir -p $BUILDFOLDER
 rm -f $BUILDFOLDER/setup.py
-for f in $MAINPY OSC.py; do
+for f in $MAINPY; do
 	cp -r $f $BUILDFOLDER/
 done
 
 pushd $BUILDFOLDER
 py2applet --make-setup $MAINPY # ./assets/icon.icns
-python setup.py py2app --resources OSC.py #pd,moire_firmware,serial,midilamp
+python setup.py py2app
 popd
 
-cp -r "$BUILDFOLDER/dist/moire.app" .
+cp -r "$BUILDFOLDER/dist/$NAME.app" .
 
