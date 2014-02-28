@@ -1,0 +1,27 @@
+#!/bin/bash
+if [ -z $VIRTUAL_ENV ] ; then
+        echo ------------------------------------------------
+        echo  This script must be called withit a virtualenv
+        echo ------------------------------------------------
+        echo
+        exit
+fi
+
+BUILDFOLDER="appbuild"
+#CSDPATCH="moire.csd"
+MAINPY="midilamp.py"
+# PDPATCH="moiregui2.pd"
+
+mkdir -p $BUILDFOLDER
+rm -f $BUILDFOLDER/setup.py
+for f in $MAINPY OSC.py; do
+	cp -r $f $BUILDFOLDER/
+done
+
+pushd $BUILDFOLDER
+py2applet --make-setup $MAINPY # ./assets/icon.icns
+python setup.py py2app --resources OSC.py #pd,moire_firmware,serial,midilamp
+popd
+
+cp -r "$BUILDFOLDER/dist/moire.app" .
+

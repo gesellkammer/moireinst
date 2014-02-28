@@ -1,0 +1,12 @@
+#N canvas 788 277 450 300 10;
+#X obj 97 43 inlet;
+#X obj 117 124 mean;
+#X msg 184 132 clear;
+#X obj 89 180 outlet;
+#X obj 242 40 loadbang;
+#X obj 164 80 metro \$1;
+#X connect 0 0 1 0;
+#X connect 1 0 3 0;
+#X connect 2 0 1 0;
+#X connect 4 0 5 0;
+#X connect 5 0 2 0;

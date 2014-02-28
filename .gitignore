@@ -1,0 +1,9 @@
+*~
+.Sync*
+*.pyc
+appbuild
+old
+test
+sourcetest
+*.app
+cache
