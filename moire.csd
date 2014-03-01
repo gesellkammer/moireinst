@@ -46,8 +46,7 @@ nchnls = 4
 #define LAMP_PORT #11111#
 #define LAMP_HOST #"127.0.0.1"#
 #define CAM_PORT #22222#
-#define CAM_HOST #"127.0.0.1"
-#define CAM_CC #99#
+#define CAM_HOST #"127.0.0.1"#
 
 ;; ------ PRIVATE --------
 #define SAW #1#

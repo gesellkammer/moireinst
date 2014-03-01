@@ -44,13 +44,13 @@ empty 0 -8 1 16 -262144 -39609 -262144 64 256;
 #X obj 10 103 hsl 128 10 0 1 0 1 feedbackwet-send feedbackwet-recv
 |__fback-wet 64 5 1 10 -262144 -1 -1 0 1;
 #X obj 10 148 hsl 95 10 1 25 0 1 shift-send shift-recv shift 0 5 1
-10 -233017 -33289 -1 2100 0;
+10 -24198 -1 -1 2100 0;
 #X obj 10 116 hsl 128 10 0 1 0 1 phasewet-send phasewet-recv |__phase
 64 5 1 10 -262144 -1 -1 0 1;
 #X floatatom 73 64 3 0 1 0 FDN fader1-recv -;
 #X obj 10 129 hsl 128 10 0 100 0 1 ringmodboost-send ringmodboost-recv
 |__ringmod 64 5 1 10 -262144 -1 -1 0 1;
-#N canvas 567 22 568 581 ADVANCED 1;
+#N canvas 429 62 568 581 ADVANCED 0;
 #N canvas 224 57 872 557 guts 0;
 #X msg 453 234 set \$1;
 #X obj 453 184 r ui-inputknob-send;
@@ -232,12 +232,12 @@ ui-mastergaindb-recv bang \; ui-gate1-recv bang \; ui-gate0-recv bang
 #X connect 48 0 47 0;
 #X connect 49 0 0 0;
 #X restore 256 -171 pd guts;
-#N canvas 1501 91 450 300 pathsandlibs 0;
+#N canvas 225 91 450 300 pathsandlibs 0;
 #X obj 28 19 import cyclone;
 #X obj 28 41 import iemlib;
 #X obj 26 74 declare -path pd;
 #X restore 362 -171 pd pathsandlibs;
-#N canvas 346 259 730 457 osc 0;
+#N canvas 82 141 746 344 osc 0;
 #X obj 232 8 s ui-inputknob-recv;
 #X obj 15 12 dumpOSC 30019;
 #X obj 232 -42 r inputgain;
@@ -527,15 +527,37 @@ ui-mastergaindb-recv bang \; ui-gate1-recv bang \; ui-gate0-recv bang
 #X connect 6 0 5 0;
 #X restore 207 92 pd pingback;
 #X obj 232 -18 amp2db;
-#X obj 334 308 int;
-#X msg 334 331 send /minbrightness \$1;
-#X obj 248 370 sendOSC;
-#X msg 156 304 connect localhost 22222;
-#X obj 156 278 loadbang;
-#X obj 506 308 int;
-#X obj 506 283 r brightness-send;
-#X obj 334 283 r minbrightness-send;
-#X msg 506 331 send /A \$1;
+#N canvas 508 142 450 300 osc-camera-and-lamp 0;
+#X obj 75 106 int;
+#X msg 75 129 send /minbrightness \$1;
+#X obj 59 255 sendOSC;
+#X msg 27 49 connect localhost 22222;
+#X obj 27 26 loadbang;
+#X obj 92 191 int;
+#X obj 92 166 r brightness-send;
+#X obj 75 81 r minbrightness-send;
+#X msg 92 214 send /set \$1;
+#X obj 280 255 sendOSC;
+#X obj 218 23 loadbang;
+#X msg 218 46 connect localhost 11111;
+#X obj 299 160 int;
+#X obj 299 135 r brightness-send;
+#X msg 299 183 send /set \$1;
+#X connect 0 0 1 0;
+#X connect 1 0 2 0;
+#X connect 3 0 2 0;
+#X connect 4 0 3 0;
+#X connect 5 0 8 0;
+#X connect 6 0 5 0;
+#X connect 7 0 0 0;
+#X connect 8 0 2 0;
+#X connect 10 0 11 0;
+#X connect 11 0 9 0;
+#X connect 12 0 14 0;
+#X connect 13 0 12 0;
+#X connect 14 0 9 0;
+#X restore 196 235 pd osc-camera-and-lamp;
+#X text 193 215 to test manually the lamp and camera;
 #X connect 1 0 22 0;
 #X connect 2 0 24 0;
 #X connect 3 0 4 0;
@@ -554,23 +576,15 @@ ui-mastergaindb-recv bang \; ui-gate1-recv bang \; ui-gate0-recv bang
 #X connect 22 2 21 0;
 #X connect 22 3 23 0;
 #X connect 24 0 0 0;
-#X connect 25 0 26 0;
-#X connect 26 0 27 0;
-#X connect 28 0 27 0;
-#X connect 29 0 28 0;
-#X connect 30 0 33 0;
-#X connect 31 0 30 0;
-#X connect 32 0 25 0;
-#X connect 33 0 27 0;
 #X restore 313 -171 pd osc;
 #X obj 134 -76 hsl 128 10 0 1 0 1 ringspread-send ringspread-recv |
 64 5 1 10 -262144 -1 -1 7800 1;
 #X text 22 -79 RINGMOD - SPREAD;
 #X text 37 -41 DIGITAL GAIN L;
-#X obj 134 -40 hsl 128 15 0 2 0 1 diggainL-send diggainL-recv ............|............107%
-28 8 1 10 -3381 -262144 -1 6800 1;
-#X obj 134 -20 hsl 128 15 0 2 0 1 diggainR-send diggainR-recv ............|............91%
-28 8 1 10 -3381 -262144 -1 5800 1;
+#X obj 134 -40 hsl 128 15 0 2 0 1 diggainL-send diggainL-recv ............|............102%
+28 8 1 10 -3381 -262144 -1 6500 1;
+#X obj 134 -20 hsl 128 15 0 2 0 1 diggainR-send diggainR-recv ............|............96%
+28 8 1 10 -3381 -262144 -1 6100 1;
 #X text 115 -21 R;
 #X obj 11 -147 nbx 5 15 -1e+37 1e+37 0 0 empty ui-samplerate-recv samplerate
 0 -6 0 8 -233017 -33289 -1 -1 256;
@@ -612,11 +626,11 @@ empty 0 -8 0 10 -262144 -1 -1 60 256;
 #X floatatom 131 280 5 0 100 0 - - -;
 #X text 20 264 LIGHT MAX (X);
 #X obj 134 307 hsl 128 10 0 1000 0 1 minbrightness-send minbrightness-recv
-empty -2 -8 0 10 -262144 -1 -1 3000 1;
+empty -2 -8 0 10 -262144 -1 -1 2900 1;
 #X floatatom 131 319 5 0 100 0 - - -;
 #X text 20 303 MIN BRIGHTNESS;
 #X obj 134 346 hsl 128 10 0 1000 0 0 brightness-send empty empty -2
--8 0 10 -262144 -1 -1 4900 1;
+-8 0 10 -262144 -1 -1 0 1;
 #X floatatom 131 358 5 0 100 0 - - -;
 #X text 20 342 MANUAL BRIGHTNESS;
 #X connect 12 0 13 0;

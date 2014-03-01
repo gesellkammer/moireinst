@@ -7,7 +7,7 @@ import liblo
 import os
 import serial
 
-LINUX_AUDIOINTERFACE = "Komplete"
+AUDIOINTERFACE = "Komplete"
 CSOUNDPATCH = "moire.csd"
 PDPATCH = "moiregui2.pd"
 PDAPP = "/Applications/Pd-0.44"
@@ -32,7 +32,7 @@ def _is_moire_arduino(dev, timeout=3):
     t0 = time.time()
     while time.time() - t0 < timeout:
         c = s.read(1)
-        if not c:
+        if len(c) == 0:
             continue
         c = ord(c)
         if c < 128:
@@ -45,7 +45,6 @@ def find_arduino():
     if DARWIN:
         devs = glob.glob("/dev/tty*usb*")
         for dev in devs:
-
             if _is_moire_arduino(dev):
                 print "found moire device!", dev
                 return dev
@@ -71,7 +70,7 @@ def exit(delay=1):
     sys.exit(0)
 
 
-def linux_find_audiodevice(kind, pattern, backend='pa_cb', debug=False):
+def find_audiodevice(kind, pattern, backend='pa_cb', debug=False):
     """kind: in or out"""
     import re, fnmatch
     if kind == 'out':
@@ -80,6 +79,7 @@ def linux_find_audiodevice(kind, pattern, backend='pa_cb', debug=False):
     else:
         flag = '-iadc99'
         patt = "[0-9]: adc[0-9].+"
+    cs_patch = "moire.csd"
     cmd = "csound -+rtaudio={backend} {flag} {patch}".format(backend=backend, flag=flag, patch=cs_patch)
     if debug:
         print "cmd: ", cmd
@@ -93,7 +93,7 @@ def linux_find_audiodevice(kind, pattern, backend='pa_cb', debug=False):
             return int(match.strip()[0])
     return None
 
-def linux_find_audiodevices(pattern, backend='pa_cb'):
+def find_audiodevices(pattern, backend='pa_cb'):
     indev, outdev = linux_find_audiodevice('in', pattern, backend), linux_find_audiodevice('out', pattern, backend)
     return indev, outdev
 
@@ -299,6 +299,7 @@ if __name__ == '__main__':
         if is_cs_running():
             print "Csound is already running. Exiting"
             exit()
+        #indev, outdev = find_audiodevices('*%s*' % AUDIOINTERFACE)
         csoundproc = launch_csound()
         try:
             csoundproc.wait()
@@ -312,7 +313,7 @@ if __name__ == '__main__':
             print "Csound is already running!"
             sys.exit(0)
 
-        indev, outdev = linux_find_audiodevices('*%s*' % LINUX_AUDIOINTERFACE)
+        indev, outdev = find_audiodevices('*%s*' % AUDIOINTERFACE)
         print "Audio Devices:", indev, outdev
         if indev is None or outdev is None:
             print "Could not find audiodevice. Is it plugged in?"
