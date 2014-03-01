@@ -1,10 +1,8 @@
-#include <Arduino.h>
 #include <Adafruit_MCP4725.h>
 #include <Wire.h>
 
-
 #define DELAYMS 10
-#define HEARTBEAT_PERIOD 200
+#define HEARTBEAT_PERIOD 500
 #define VCC 5
 #define DAC_RESOLUTION 4096
 #define V_TABLE_SIZE 8

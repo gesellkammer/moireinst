@@ -10,15 +10,16 @@ fi
 BUILDFOLDER="appbuild"
 NAME=midilamp
 MAINPY=$NAME.py
+ICON=lamp.icns
 
 mkdir -p $BUILDFOLDER
 rm -f $BUILDFOLDER/setup.py
-for f in $MAINPY; do
+for f in $MAINPY $ICON; do
 	cp -r $f $BUILDFOLDER/
 done
 
 pushd $BUILDFOLDER
-py2applet --make-setup $MAINPY # ./assets/icon.icns
+py2applet --make-setup $MAINPY $ICON
 python setup.py py2app
 popd
 
