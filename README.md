@@ -2,7 +2,10 @@
 
 * moire.app
 * midilamp.app
+* Webcam Settings
 * moirecam.app
+
+> NB: start the software in this order
 
 ### moirecam.app
 
@@ -56,7 +59,7 @@
 * Connect the pedal
 
 ## Launching
-* Launch the moire app (moire.app)
+* Launch the moire app (MOIRE.sh)
 * The moire.app will launch PD. 
 * PD is only used as a user-interface, keep DSP off
 * To quit, press the QUIT button.
