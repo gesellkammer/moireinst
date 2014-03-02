@@ -236,7 +236,13 @@ class Manager(object):
             exit()
         print "launching csound"
         self.csoundproc = launch_csound()
-        s = liblo.Server(MANAGERPORT)
+        try:
+            s = liblo.Server(MANAGERPORT)
+        except liblo.ServerError:
+            print "Could not start Manager in original port"
+            print "Turning sound on/off will probably not work"
+            s = liblo.Server()
+
         if RUNLAMP and not is_lamp_running():
             self.lampproc = launch_lamp()
 

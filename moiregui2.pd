@@ -1,4 +1,4 @@
-#N canvas 572 22 456 494 10;
+#N canvas 189 22 456 494 10;
 #X declare -lib cyclone;
 #X declare -lib iemlib;
 #X declare -path pd;
@@ -630,7 +630,7 @@ empty 0 -8 0 10 -262144 -1 -1 60 256;
 #X floatatom 131 280 5 0 100 0 - - -;
 #X text 20 264 LIGHT MAX (X);
 #X obj 134 307 hsl 128 10 0 1000 0 1 minbrightness-send minbrightness-recv
-empty -2 -8 0 10 -262144 -1 -1 2900 1;
+empty -2 -8 0 10 -262144 -1 -1 700 1;
 #X floatatom 131 319 5 0 100 0 - - -;
 #X text 20 303 MIN BRIGHTNESS;
 #X obj 134 346 hsl 128 10 0 1000 0 0 brightness-send empty empty -2
