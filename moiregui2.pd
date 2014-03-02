@@ -44,14 +44,14 @@ empty 0 -8 1 16 -262144 -39609 -262144 64 256;
 #X obj 10 103 hsl 128 10 0 1 0 1 feedbackwet-send feedbackwet-recv
 |__fback-wet 64 5 1 10 -262144 -1 -1 0 1;
 #X obj 10 148 hsl 95 10 1 25 0 1 shift-send shift-recv shift 0 5 1
-10 -24198 -1 -1 2100 0;
+10 -233017 -33289 -1 2100 0;
 #X obj 10 116 hsl 128 10 0 1 0 1 phasewet-send phasewet-recv |__phase
 64 5 1 10 -262144 -1 -1 0 1;
 #X floatatom 73 64 3 0 1 0 FDN fader1-recv -;
 #X obj 10 129 hsl 128 10 0 100 0 1 ringmodboost-send ringmodboost-recv
 |__ringmod 64 5 1 10 -262144 -1 -1 0 1;
 #N canvas 429 62 568 581 ADVANCED 0;
-#N canvas 224 57 872 557 guts 0;
+#N canvas 150 52 872 557 guts 0;
 #X msg 453 234 set \$1;
 #X obj 453 184 r ui-inputknob-send;
 #X obj 453 254 s ui-inputnb-recv;
@@ -92,12 +92,12 @@ OFF \; audiotoggle-recv color 13 22 22;
 #X connect 1 1 4 0;
 #X connect 3 0 0 0;
 #X restore 10 34 pd mute-control;
-#X obj 9 266 r diggainL-send;
-#X obj 9 288 * 100;
-#X obj 9 308 int;
-#X obj 11 387 * 100;
-#X obj 11 407 int;
-#X obj 11 365 r diggainR-send;
+#X obj 9 316 r diggainL-send;
+#X obj 9 338 * 100;
+#X obj 9 358 int;
+#X obj 11 437 * 100;
+#X obj 11 457 int;
+#X obj 11 415 r diggainR-send;
 #X obj 361 349 r test-freq;
 #X obj 361 369 ftom;
 #X msg 371 391 \; test-midinote-recv set \$1;
@@ -108,7 +108,7 @@ OFF \; audiotoggle-recv color 13 22 22;
 #X obj 361 503 s test-notename;
 #X obj 10 121 r quit-send;
 #X obj 30 143 s savepatch;
-#X msg 10 208 \; pd quit;
+#X msg 18 263 \; pd quit;
 #X obj 10 186 delay 2000;
 #X obj 20 165 s quit-osc-manager;
 #X msg 647 93 \; ringspread-recv bang \; feedbackwet-recv bang \; feedback-recv
@@ -179,15 +179,17 @@ bang \; ana-gate-exp-recv bang \; autosave-sec-recv bang \;;
 #X obj 339 220 int;
 #X obj 339 200 smooth 0.2;
 #X obj 453 209 amp2db;
-#X msg 11 435 \; diggainR-recv label ............|............\$1%
+#X msg 11 485 \; diggainR-recv label ............|............\$1%
 ;
-#X msg 9 327 \; diggainL-recv label ............|............\$1%;
+#X msg 9 377 \; diggainL-recv label ............|............\$1%;
 #X msg 647 308 \; stereomagn-recv bang \; ringmodboost-recv bang \;
 ui-mastergaindb-recv bang \; ui-gate1-recv bang \; ui-gate0-recv bang
 \; ui-minvar-recv bang \; ui-smooth-recv bang \; ui-speed-recv bang
 \; diggainL-recv bang \; diggainR-recv bang \; gaindigpre-recv bang
 \; gaindigpost-recv bang \; ampcurve-recv bang \; smoothgain-recv bang
 \; lightmax-recv bang \; minbrightness-recv bang \;;
+#X obj 51 215 r quitpd-send;
+#X obj 18 240 spigot;
 #X connect 0 0 2 0;
 #X connect 1 0 49 0;
 #X connect 3 0 8 0;
@@ -212,7 +214,7 @@ ui-mastergaindb-recv bang \; ui-gate1-recv bang \; ui-gate0-recv bang
 #X connect 26 0 27 0;
 #X connect 26 0 29 0;
 #X connect 26 0 30 0;
-#X connect 29 0 28 0;
+#X connect 29 0 54 0;
 #X connect 33 0 37 0;
 #X connect 35 0 38 0;
 #X connect 35 0 40 0;
@@ -231,6 +233,8 @@ ui-mastergaindb-recv bang \; ui-gate1-recv bang \; ui-gate0-recv bang
 #X connect 47 0 43 0;
 #X connect 48 0 47 0;
 #X connect 49 0 0 0;
+#X connect 53 0 54 1;
+#X connect 54 0 28 0;
 #X restore 256 -171 pd guts;
 #N canvas 225 91 450 300 pathsandlibs 0;
 #X obj 28 19 import cyclone;
@@ -589,7 +593,7 @@ ui-mastergaindb-recv bang \; ui-gate1-recv bang \; ui-gate0-recv bang
 #X obj 11 -147 nbx 5 15 -1e+37 1e+37 0 0 empty ui-samplerate-recv samplerate
 0 -6 0 8 -233017 -33289 -1 -1 256;
 #X obj 11 -115 nbx 5 15 -1e+37 1e+37 0 0 empty guirate guirate 0 -6
-0 8 -233017 -33289 -1 0 256;
+0 8 -233017 -33289 -1 12 256;
 #X text 8 -177 DEBUG;
 #X obj 134 14 hsl 128 10 1 5 0 1 stereomagn-send stereomagn-recv empty
 -2 -8 0 10 -262144 -1 -1 2000 1;
@@ -648,7 +652,7 @@ empty -2 -8 0 10 -262144 -1 -1 2900 1;
 #X obj 158 -260 vu 14 120 vusourcedb empty -1 -8 0 9 -66577 -262144
 1 0;
 #X obj 82 -237 vsl 30 50 -60 0 0 0 empty ui-inputknob-recv PED 0 -9
-0 9 -1 -258113 -1 0 1;
+0 9 -1 -258113 -1 4900 1;
 #X obj 82 -184 nbx 3 14 -99 99 0 0 empty ui-inputknob-recv empty 0
 -8 0 9 -99865 -262144 -1 0 256;
 #X obj 242 -264 cnv 15 160 140 empty empty PRACTICE 4 9 1 9 -232576
@@ -691,7 +695,7 @@ postgate(dB) -25 20 1 10 -99865 -262144 -66577 15 256;
 #X obj 246 -69 nbx 3 13 -48 48 0 1 gaindigpre-send gaindigpre-recv
 pregate(dB) 0 20 1 10 -99865 -262144 -66577 -16 256;
 #X obj 179 -92 hsl 50 19 0 1 0 0 ui-mix-send ui-mix-recv empty -2 -8
-0 10 -1 -257985 -1 0 1;
+0 10 -1 -257985 -1 4900 1;
 #X obj 311 -206 nbx 4 16 8 12000 1 1 test-midinote-send test-midinote-recv
 midinote 0 -8 0 10 -262144 -159808 -1 70.5574 256;
 #X symbolatom 361 -206 5 0 0 0 - test-notename -;
@@ -699,3 +703,5 @@ midinote 0 -8 0 10 -262144 -159808 -1 70.5574 256;
 -1 -1;
 #X obj 278 90 tgl 32 0 audiotoggle-send audiotoggle-recv OFF -1 -6
 1 13 -258699 -1 -1 0 1;
+#X obj 351 141 tgl 15 1 quitpd-send quitpd-recv QUIT_PD 18 7 0 9 -262144
+-24198 -1 0 1;

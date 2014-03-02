@@ -23,6 +23,7 @@ nchnls = 4
 #define FROM_MOIRE1 #1#
 #define FROM_MOIRE2 #2#   
 #define SIMULATE_OUTCHANNEL #4#
+#define MIRROR34 #1#	// output 1+2 will be mirrored in 3+4
 
 ;;; OSC
 #define ADDR_HOST #"127.0.0.1"#
@@ -843,6 +844,10 @@ skip_shift:
 	
 	outch 1, aOutL
 	outch 2, aOutR
+#ifdef MIRROR34
+	outch 3, aOutL
+	outch 4, aOutR
+#end
 	
 endin
 

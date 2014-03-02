@@ -53,12 +53,19 @@
 * Connect the internal audio interface to USB
 * Select the internal audio interface (Komplete 6) as your default interface
 * Samplerate: 44100
+* Connect the pedal
 
 ## Launching
 * Launch the moire app (moire.app)
 * The moire.app will launch PD. 
 * PD is only used as a user-interface, keep DSP off
 * To quit, press the QUIT button.
+
+## Check
+* The pedal should move the slider "PED". The range should be -99 to 0. If the range is smaller (not going all the way down), the possible cause could be:
+	- The audio jack going to the Knob in the upper panel is not correctly plugged
+	- The pedal is not correctly plugged (the polarity is inversed)
+
 
 > NB: The app will not launch if the moire-instrument is not connected
 

@@ -69,8 +69,7 @@ def exit(delay=1):
     time.sleep(delay)
     sys.exit(0)
 
-
-def find_audiodevice(kind, pattern, backend='pa_cb', debug=False):
+def get_audiodevices(kind, pattern="*", backend='pa_cb'):
     """kind: in or out"""
     import re, fnmatch
     if kind == 'out':
@@ -81,20 +80,27 @@ def find_audiodevice(kind, pattern, backend='pa_cb', debug=False):
         patt = "[0-9]: adc[0-9].+"
     cs_patch = "moire.csd"
     cmd = "csound -+rtaudio={backend} {flag} {patch}".format(backend=backend, flag=flag, patch=cs_patch)
-    if debug:
-        print "cmd: ", cmd
     p = subprocess.Popen(cmd.split(), stderr=subprocess.PIPE, stdout=subprocess.PIPE)
     _, stderr = p.communicate()
     matches = re.findall(patt, stderr)
-    if debug:
-        print matches
+    devices = []
     for match in matches:
-        if fnmatch.fnmatch(match, pattern):
-            return int(match.strip()[0])
+        device_name = match.strip().split(":")[1].strip() 
+        device_index = int(match.split(":")[0].strip()[-1])
+        if "(" in device_name:
+            device_name = device_name.split("(")[1][:-1]
+        if fnmatch.fnmatch(device_name, pattern):
+            devices.append((device_index, device_name))
+    return devices
+
+def find_audiodevice(kind, pattern, backend='pa_cb'):
+    devices = get_audiodevices(kind=kind, pattern=pattern, backend=backend)
+    if devices:
+        return devices[0][0] # return the index
     return None
 
-def find_audiodevices(pattern, backend='pa_cb'):
-    indev, outdev = linux_find_audiodevice('in', pattern, backend), linux_find_audiodevice('out', pattern, backend)
+def find_audiodevices(pattern="*Kontakt*", backend='pa_cb'):
+    indev, outdev = find_audiodevice('in', pattern, backend), find_audiodevice('out', pattern, backend)
     return indev, outdev
 
 def get_proc_status(port):
@@ -180,8 +186,18 @@ def check_csound_exit(starttime, exitmsg):
         print
 
 def launch_csound():
+    indev, outdev = find_audiodevices('*%s*' % AUDIOINTERFACE)
+    if indev is None or outdev is None:
+        print "Could not find audiodevice! Audio devices detected:"
+        in_audiodevies = get_audiodevices("in")
+        out_audiodevices = get_audiodevices("out")
+        print "Input: % s" % str(in_audiodevices)
+        print "Output: %s" % str(out_audiodevices)
+        sys.exit(0)
     if DARWIN:
-        cs_flags = "-iadc -odac -+rtaudio=pa_cb --env:CSNOSTOP=yes"
+        indevstr = str(indev) if indev is not None else ""
+        outdevstr = str(outdev) if outdev is not None else ""
+        cs_flags = "-iadc%s -odac%s -+rtaudio=pa_cb --env:CSNOSTOP=yes" % (indevstr, outdevstr)
         cmd = " ".join(("csound", cs_flags, cs_arduino, cs_patch))
         print "Calling csound with:\n\n" + cmd
         csound_t0 = time.time()
@@ -235,6 +251,7 @@ class Manager(object):
                     print "could not stop csound!"
                     exit()
                 self.csoundproc = launch_csound()
+
         def quit(path, args):
             self.oscserver.send(CSPORT, '/stop', 1)
             if self.csoundproc is not None and self.csoundproc.poll():
@@ -242,6 +259,7 @@ class Manager(object):
             if self.lampproc is not None and self.lampproc.poll():
                 self.lampproc.kill()
             self.running = False
+
         def stop_csound(path, args):
             self.oscserver.send(CSPORT, '/stop', 1)
             time.sleep(0.5)
@@ -299,7 +317,7 @@ if __name__ == '__main__':
         if is_cs_running():
             print "Csound is already running. Exiting"
             exit()
-        #indev, outdev = find_audiodevices('*%s*' % AUDIOINTERFACE)
+        
         csoundproc = launch_csound()
         try:
             csoundproc.wait()
