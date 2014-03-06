@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import division
 import serial
 import time
 import logging
@@ -80,6 +81,8 @@ class MidiLamp(object):
         self.conn = None
         self.connect_serial()
         self.oscport = oscport
+        self.minbrightness = 0
+        self.maxbrightness = 1000
         try:
             # self.server = MyOSCServer(("localhost", oscport))
             self.server = liblo.Server(11111)
@@ -91,14 +94,16 @@ class MidiLamp(object):
         self.thread = None
         self.add_handlers_liblo()
         
-    def add_handlers_OSC(self):
-        set_light = self.set_light
-        def SET(path, tags, args, source):
-            set_light(args[0])
-        def STOP(path, tags, args, source):
-            self._running = False
-        self.server.addMsgHandler("/set", SET)
-        self.server.addMsgHandler("/stop", STOP)
+    #def add_handlers_OSC(self):
+    #    set_light = self.set_light
+    #    def SET(path, tags, args, source):
+    #        set_light(args[0])
+    #    def STOP(path, tags, args, source):
+    #        self._running = False
+    #    self.server.addMsgHandler("/set", SET)
+    #    self.server.addMsgHandler("/stop", STOP)
+    #    self.server.addMsgHandler("/minbrightness", MIN)
+    #    self.server.addMsgHandler("/maxbrightness", MAX)
 
     def add_handlers_liblo(self):
         set_light = self.set_light
@@ -112,8 +117,21 @@ class MidiLamp(object):
             self._running = False
         def DEBUG(path, args, types, src):
             logging.debug("Got garbage! path={path}, args={args}, types={types}".format(**locals()))
+        def MIN(path, args, types, src):
+            brightness = args[0]
+            if brightness < 0 or brightness > 1000:
+                logging.debug("MIN Brightness should be 0-1000, got: %d" % brightness)
+            self.minbrightness = brightness
+        def MAX(path, args, types, src):
+            brightness = args[0]
+            if brightness < 0 or brightness > 1000:
+                logging.debug("MAX Brightness should be 0-1000")
+            self.maxbrightness = brightness
+        
         self.server.add_method("/set", None, SET)
         self.server.add_method("/stop", None, STOP)
+        self.server.add_method("/minbrightness", None, MIN)
+        self.server.add_method("/maxbrightness", None, MAX)
         self.server.add_method(None, None, DEBUG)
         
     def set_light(self, lum, smooth=False):
@@ -121,6 +139,7 @@ class MidiLamp(object):
         if lum == self._lastlum:
             return
         connwrite = self.conn.write
+        lum = (lum/1000) * (self.maxbrightness - self.minbrightness) + self.minbrightness
         try:
             if smooth:
                 lum = lum * 0.5 + self._lastlum * 0.5

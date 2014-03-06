@@ -24,11 +24,11 @@ if sys.platform == 'linux2':
     LINUX = True
     DARWIN = False
 
-def _is_moire_arduino(dev, timeout=3):
+def detect_moire_device(dev, timeout=3):
     try:
         s = serial.Serial(dev, timeout=0.5)
     except OSError:
-        return False
+        return (False, "device busy")
     t0 = time.time()
     while time.time() - t0 < timeout:
         c = s.read(1)
@@ -38,18 +38,19 @@ def _is_moire_arduino(dev, timeout=3):
         if c < 128:
             continue
         if c == 200:
-            return True
-    return False
+            return (True, None)
+    return (False, "no heartbeat")
     
 def find_arduino():
     if DARWIN:
         devs = glob.glob("/dev/tty*usb*")
         for dev in devs:
-            if _is_moire_arduino(dev):
+            ismoire, msg = detect_moire_device(dev)
+            if ismoire:
                 print "found moire device!", dev
                 return dev
             else:
-                print "device %s is not the moire device" % dev
+                print "device %s is not the moire device: %s" % (dev, msg)
         return None
     elif LINUX:
         arduino = glob.glob("/dev/*arduino*")
@@ -197,7 +198,9 @@ def launch_csound():
     if DARWIN:
         indevstr = str(indev) if indev is not None else ""
         outdevstr = str(outdev) if outdev is not None else ""
-        cs_flags = "-iadc%s -odac%s -+rtaudio=pa_cb --env:CSNOSTOP=yes" % (indevstr, outdevstr)
+        backend = 'pa_cb'
+        cs_flags = "-iadc{indev} -odac{outdev} -+rtaudio={backend} --env:CSNOSTOP=yes".format(
+            indev=indevstr, outdev=outdevstr, backend=backend)
         cmd = " ".join(("csound", cs_flags, cs_arduino, cs_patch))
         print "Calling csound with:\n\n" + cmd
         csound_t0 = time.time()
@@ -302,6 +305,7 @@ if __name__ == '__main__':
         print "ERROR: could not find the MOIRE usb device"
         print "Is it connected??"
         print
+        time.sleep(3)
         exit()
 
     if DARWIN:
