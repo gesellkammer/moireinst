@@ -1,4 +1,4 @@
-#N canvas 131 97 456 494 10;
+#N canvas 131 97 458 506 10;
 #X declare -lib cyclone;
 #X declare -lib iemlib;
 #X declare -path pd;
@@ -7,11 +7,11 @@
 #X obj 287 -31 nbx 3 20 -90 0 0 1 ui-gate1-send ui-gate1-recv empty
 0 -8 1 16 -262144 -39609 -262144 -48 256;
 #X obj 191 28 hsl 100 9 0.01 1 1 0 _ masterL empty -2 -8 0 10 -128992
--4034 -1 0 1;
+-4034 -1 176 1;
 #X obj 191 38 hsl 100 9 0.01 1 1 0 _ masterR empty -2 -8 0 10 -128992
 -4034 -1 0 1;
 #X obj 106 27 nbx 4 20 -99 12 0 1 ui-mastergaindb-send ui-mastergaindb-recv
-empty 0 -8 1 16 -262144 -39609 -162280 6 256;
+empty 0 -8 1 16 -262144 -39609 -162280 -21 256;
 #X text 187 12 MASTER;
 #X floatatom 295 29 5 0 0 0 - masterdb _;
 #X floatatom 157 -136 5 0 0 0 POST vusourcedb _;
@@ -40,17 +40,17 @@ empty 0 -8 1 16 -262144 -39609 -262144 64 256;
 #X obj 2 56 cnv 15 264 140 empty empty empty 20 12 0 14 -203904 -66577
 0;
 #X obj 10 90 hsl 128 10 0.5 1 0 1 feedback-send feedback-recv |__fback
-64 5 1 10 -262144 -1 -1 10668 1;
+64 5 1 10 -262144 -1 -1 0 1;
 #X obj 10 103 hsl 128 10 0 1 0 1 feedbackwet-send feedbackwet-recv
-|__fback-wet 64 5 1 10 -262144 -1 -1 554 1;
+|__fback-wet 64 5 1 10 -262144 -1 -1 0 1;
 #X obj 10 148 hsl 95 10 1 25 0 1 shift-send shift-recv shift 0 5 1
 10 -233017 -33289 -1 2100 0;
 #X obj 10 116 hsl 128 10 0 1 0 1 phasewet-send phasewet-recv |__phase
-64 5 1 10 -262144 -1 -1 8304 1;
+64 5 1 10 -262144 -1 -1 0 1;
 #X floatatom 73 64 3 0 1 0 FDN fader1-recv -;
 #X obj 10 129 hsl 128 10 0 100 0 1 ringmodboost-send ringmodboost-recv
 |__ringmod 64 5 1 10 -262144 -1 -1 0 1;
-#N canvas 514 22 610 699 ADVANCED 1;
+#N canvas 514 22 610 699 ADVANCED 0;
 #N canvas 150 52 875 601 guts 0;
 #X msg 453 234 set \$1;
 #X obj 453 184 r ui-inputknob-send;
@@ -610,26 +610,14 @@ cammin-recv bang \; cammax-recv bang \;;
 28 8 1 10 -3381 -262144 -1 5600 1;
 #X text 115 -21 R;
 #X obj 11 -147 nbx 5 15 -1e+37 1e+37 0 0 empty ui-samplerate-recv samplerate
-0 -6 0 8 -233017 -33289 -1 1201.47 256;
+0 -6 0 8 -233017 -33289 -1 1196.72 256;
 #X obj 11 -115 nbx 5 15 -1e+37 1e+37 0 0 empty guirate guirate 0 -6
-0 8 -233017 -33289 -1 12 256;
+0 8 -233017 -33289 -1 8 256;
 #X text 8 -177 DEBUG;
 #X obj 134 14 hsl 128 10 1 5 0 1 stereomagn-send stereomagn-recv empty
 -2 -8 0 10 -262144 -1 -1 1800 1;
 #X floatatom 131 26 5 0 100 0 - - -;
 #X text 10 12 STEREO MAGNIFY (X);
-#X text 13 89 SPEED ANALYSIS WINDOW (ms);
-#X text 97 119 SMOOTHING (ms);
-#X obj 205 88 nbx 3 20 5 120 0 1 ui-speed-send ui-speed-recv empty
-0 -8 1 16 -262144 -39609 -1 27 256;
-#X obj 205 119 nbx 3 20 1 100 0 1 ui-smooth-send ui-smooth-recv empty
-0 -8 1 16 -262144 -39609 -1 6 256;
-#X text 103 150 MIN VARIATION;
-#X obj 205 150 nbx 4 20 0 1 0 1 ui-minvar-send ui-minvar-recv empty
-0 -8 1 16 -262144 -39609 -1 0.05 100;
-#X floatatom 205 187 5 0 800 0 - ui-measuredspeed-recv ui-measuredspeed-send
-;
-#X text 62 186 MEASURED SPEED (Hz);
 #X obj 339 -42 nbx 4 20 0.01 20 0 1 ampcurve-send ampcurve-recv empty
 0 -8 1 16 -262144 -39609 -1 3 100;
 #X floatatom 267 -40 4 0 0 0 - v0post -;
@@ -638,11 +626,10 @@ cammin-recv bang \; cammax-recv bang \;;
 empty 0 -8 1 16 -262144 -39609 -1 1.8 100;
 #X text 401 -17 SMOOTH COMPENSATE GAIN;
 #X text 401 -36 SMOOTH CURVE;
-#X floatatom 205 217 4 0 0 0 Doppler-Freq dopplerfreq -;
 #X text 247 -104 _________________________________________;
 #X text 142 -116 Autosave Period (Seconds);
 #X obj 104 -115 nbx 3 14 1 300 0 1 autosave-sec-send autosave-sec-recv
-empty 0 -8 0 10 -262144 -1 -1 60 256;
+empty 0 -8 0 10 -262144 -1 -1 120 256;
 #X text 3 -104 _________________________________________;
 #X obj 133 394 hsl 128 10 0 1 0 1 lightmax-send lightmax-recv empty
 -2 -8 0 10 -262144 -1 -1 12700 1;
@@ -670,13 +657,46 @@ empty 0 -8 0 10 -262144 -1 -1 60 256;
 #X floatatom 393 288 5 0 100 0 - - -;
 #X text 282 272 MAX BRIGHTNESS;
 #X text 285 243 CAMERA;
+#N canvas 564 22 228 197 practice 0;
+#X obj 15 -256 cnv 15 160 140 empty empty PRACTICE 4 9 1 9 -232576
+-1 0;
+#X obj 28 -236 vradio 15 1 0 5 test-mode empty empty 0 -8 0 10 -262144
+-1 -1 0;
+#X text 45 -240 OFF;
+#X text 45 -209 SQR;
+#X text 45 -223 SAW;
+#X text 45 -193 TRI;
+#X text 45 -177 SIN;
+#X obj 87 -132 hsl 49 8 0.01 1 1 1 test-gain empty gain -2 -8 0 10
+-262144 -159808 -1 3600 1;
+#X obj 84 -234 nbx 5 16 8 12000 1 1 test-freq test-freq-recv freq 0
+-8 0 10 -262144 -159808 -1 481.417 256;
+#X obj 84 -163 nbx 5 14 0 12 0 1 test-interval empty interval 0 -8
+0 10 -262144 -159808 -1 3 256;
+#X obj 84 -198 nbx 4 16 8 12000 1 1 test-midinote-send test-midinote-recv
+midinote 0 -8 0 10 -262144 -159808 -1 70.5574 256;
+#X symbolatom 134 -198 5 0 0 0 - test-notename -;
+#X restore 464 -171 pd practice;
+#X text 14 67 SPEED ANALYSIS WINDOW (ms);
+#X text 98 97 SMOOTHING (ms);
+#X obj 206 66 nbx 3 20 5 120 0 1 ui-speed-send ui-speed-recv empty
+0 -8 1 16 -262144 -39609 -1 27 256;
+#X obj 206 97 nbx 3 20 1 100 0 1 ui-smooth-send ui-smooth-recv empty
+0 -8 1 16 -262144 -39609 -1 6 256;
+#X text 104 128 MIN VARIATION;
+#X obj 206 128 nbx 4 20 0 1 0 1 ui-minvar-send ui-minvar-recv empty
+0 -8 1 16 -262144 -39609 -1 0.05 100;
+#X floatatom 206 165 5 0 800 0 - ui-measuredspeed-recv ui-measuredspeed-send
+;
+#X text 63 164 MEASURED SPEED (Hz);
+#X floatatom 206 195 4 0 0 0 Doppler-Freq dopplerfreq -;
 #X connect 12 0 13 0;
-#X connect 34 0 35 0;
-#X connect 36 0 37 0;
-#X connect 40 0 41 0;
-#X connect 44 0 45 0;
-#X connect 47 0 48 0;
-#X connect 50 0 51 0;
+#X connect 25 0 26 0;
+#X connect 27 0 28 0;
+#X connect 31 0 32 0;
+#X connect 35 0 36 0;
+#X connect 38 0 39 0;
+#X connect 41 0 42 0;
 #X restore 339 174 pd ADVANCED;
 #X obj 107 148 nbx 3 10 -1e+37 1e+37 0 0 \$0-_ shift-send empty 0 -8
 0 9 -262144 -1 -1 6.3617 256;
@@ -685,29 +705,10 @@ empty 0 -8 0 10 -262144 -1 -1 60 256;
 #X floatatom 27 -136 5 0 0 0 PRE vusourcepre #0-_;
 #X obj 28 -260 vu 14 120 vusourcepre empty -1 -8 0 10 -66577 -262144
 1 0;
-#X obj 158 -260 vu 14 120 vusourcedb empty -1 -8 0 9 -66577 -262144
-1 0;
 #X obj 82 -237 vsl 30 50 -60 0 0 0 empty ui-inputknob-recv PED 0 -9
 0 9 -1 -258113 -1 4900 1;
 #X obj 82 -184 nbx 3 14 -99 99 0 0 empty ui-inputknob-recv empty 0
 -8 0 9 -99865 -262144 -1 0 256;
-#X obj 242 -264 cnv 15 160 140 empty empty PRACTICE 4 9 1 9 -232576
--1 0;
-#X obj 255 -244 vradio 15 1 0 5 test-mode empty empty 0 -8 0 10 -262144
--1 -1 0;
-#X text 272 -248 OFF;
-#X text 272 -217 SQR;
-#X text 272 -231 SAW;
-#X text 272 -201 TRI;
-#X text 272 -185 SIN;
-#X obj 314 -140 hsl 49 8 0.01 1 1 1 test-gain empty gain -2 -8 0 10
--262144 -159808 -1 3600 1;
-#X obj 311 -242 nbx 5 16 8 12000 1 1 test-freq test-freq-recv freq
-0 -8 0 10 -262144 -159808 -1 481.417 256;
-#X obj 311 -171 nbx 5 14 0 12 0 1 test-interval empty interval 0 -8
-0 10 -262144 -159808 -1 3 256;
-#X obj 77 -152 hsl 49 8 0.01 1 0 1 empty strain-recv strain 4 -6 0
-10 -262144 -159808 -1 0 1;
 #X obj 2 -114 cnv 15 400 76 empty empty empty 20 12 0 14 -162280 -66577
 0;
 #X obj 28 -91 hsl 128 9 0.01 1 1 0 _ vuanalogL empty -2 -8 0 10 -33289
@@ -715,9 +716,9 @@ empty 0 -8 0 10 -262144 -1 -1 60 256;
 #X obj 28 -81 hsl 128 9 0.01 1 1 0 _ vuanalogR empty -2 -8 0 10 -33289
 -4034 -1 0 1;
 #X obj 249 -92 hsl 128 9 0.01 1 1 0 _ v0post empty -2 -8 0 10 -33289
--126974 -1 0 1;
+-126974 -1 7697 1;
 #X obj 249 -82 hsl 128 9 0.01 1 1 0 _ v1post empty -2 -8 0 10 -33289
--126974 -1 0 1;
+-126974 -1 6423 1;
 #X text 243 -109 DIG;
 #X text 22 -108 ANA;
 #X floatatom 126 -108 5 0 0 0 - vuanalogdb _;
@@ -732,9 +733,6 @@ postgate(dB) -25 20 1 10 -99865 -262144 -66577 15 256;
 pregate(dB) 0 20 1 10 -99865 -262144 -66577 0 256;
 #X obj 179 -92 hsl 50 19 0 1 0 0 ui-mix-send ui-mix-recv empty -2 -8
 0 10 -1 -257985 -1 4900 1;
-#X obj 311 -206 nbx 4 16 8 12000 1 1 test-midinote-send test-midinote-recv
-midinote 0 -8 0 10 -262144 -159808 -1 70.5574 256;
-#X symbolatom 361 -206 5 0 0 0 - test-notename -;
 #X obj 375 90 bng 32 250 50 0 quit-send empty QUIT -1 -6 1 13 -258699
 -1 -1;
 #X obj 278 90 tgl 32 0 audiotoggle-send audiotoggle-recv ON -1 -6 1

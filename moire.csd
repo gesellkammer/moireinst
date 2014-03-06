@@ -29,7 +29,7 @@ nchnls = 4
 #define ADDR_HOST #"127.0.0.1"#
 #define ADDR_PORT #30019#
 #define OSCPORT   #30018#
-#define UIUPDATERATE #12#
+#define UIUPDATERATE #8#
 
 #define ADAPTPERIODX #12#
 
@@ -339,7 +339,7 @@ instr Brain
 	gk_v1post = ntrpol(kR, pow(kR, gk_smoothcurve)*gk_smoothgain, kbut1)
 	
 	k_knobtrig = changed(gk_fader1, gk_postinit)
-	if (k_knobtrig == 0) kgoto exit
+if (k_knobtrig == 0) kgoto exit
 	ki = gk_fader1*10
 	gk_feedback    = tablei(ki, itab_feedback)
 	gk_feedbackwet = tablei(ki, itab_feedbackwet)
