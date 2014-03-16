@@ -794,7 +794,6 @@ skip_shift:
 	kcross = port(gk_phasewet, 0.005)
 	aDigL = ntrpol(aDigL, aphL, kcross) * interp(gk_v0post)
 	aDigR = ntrpol(aDigR, aphR, kcross) * interp(gk_v1post)
-	
 	; --- RINGMOD BOOST ---
 	kringfreq = port(gk_freq*gk_freqmult, 0.005)
 	kringenv  = port(tablei(kringfreq, itab_speed2ringenv), 0.005)
