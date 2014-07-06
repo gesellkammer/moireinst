@@ -1,4 +1,4 @@
-#N canvas 131 97 458 506 10;
+#N canvas 12 22 458 506 10;
 #X declare -lib cyclone;
 #X declare -lib iemlib;
 #X declare -path pd;
@@ -7,11 +7,11 @@
 #X obj 287 -31 nbx 3 20 -90 0 0 1 ui-gate1-send ui-gate1-recv empty
 0 -8 1 16 -262144 -39609 -262144 -48 256;
 #X obj 191 28 hsl 100 9 0.01 1 1 0 _ masterL empty -2 -8 0 10 -128992
--4034 -1 7915 1;
+-4034 -1 0 1;
 #X obj 191 38 hsl 100 9 0.01 1 1 0 _ masterR empty -2 -8 0 10 -128992
 -4034 -1 0 1;
 #X obj 106 27 nbx 4 20 -99 12 0 1 ui-mastergaindb-send ui-mastergaindb-recv
-empty 0 -8 1 16 -262144 -39609 -162280 -6 256;
+empty 0 -8 1 16 -262144 -39609 -162280 2 256;
 #X text 187 12 MASTER;
 #X floatatom 295 29 5 0 0 0 - masterdb _;
 #X floatatom 157 -136 5 0 0 0 POST vusourcedb _;
@@ -40,17 +40,17 @@ empty 0 -8 1 16 -262144 -39609 -262144 59 256;
 #X obj 2 56 cnv 15 264 140 empty empty empty 20 12 0 14 -203904 -66577
 0;
 #X obj 10 90 hsl 128 10 0.5 1 0 1 feedback-send feedback-recv |__fback
-64 5 1 10 -262144 -1 -1 0 1;
+64 5 1 10 -262144 -1 -1 10668 1;
 #X obj 10 103 hsl 128 10 0 1 0 1 feedbackwet-send feedbackwet-recv
 |__fback-wet 64 5 1 10 -262144 -1 -1 0 1;
 #X obj 10 148 hsl 95 10 1 25 0 1 shift-send shift-recv shift 0 5 1
 10 -233017 -33289 -1 2100 0;
 #X obj 10 116 hsl 128 10 0 1 0 1 phasewet-send phasewet-recv |__phase
-64 5 1 10 -262144 -1 -1 0 1;
+64 5 1 10 -262144 -1 -1 3541 1;
 #X floatatom 73 64 3 0 1 0 FDN fader1-recv -;
 #X obj 10 129 hsl 128 10 0 100 0 1 ringmodboost-send ringmodboost-recv
 |__ringmod 64 5 1 10 -262144 -1 -1 0 1;
-#N canvas 156 31 610 699 ADVANCED 0;
+#N canvas 510 22 610 699 ADVANCED 1;
 #N canvas 150 52 875 601 guts 0;
 #X msg 453 234 set \$1;
 #X obj 453 184 r ui-inputknob-send;
@@ -604,18 +604,18 @@ cammin-recv bang \; cammax-recv bang \;;
 64 5 1 10 -262144 -1 -1 7800 1;
 #X text 22 -79 RINGMOD - SPREAD;
 #X text 37 -41 DIGITAL GAIN L;
-#X obj 134 -40 hsl 128 15 0 2 0 1 diggainL-send diggainL-recv ............|............116%
-28 8 1 10 -3381 -262144 -1 7400 1;
-#X obj 134 -20 hsl 128 15 0 2 0 1 diggainR-send diggainR-recv ............|............88%
-28 8 1 10 -3381 -262144 -1 5600 1;
+#X obj 134 -40 hsl 128 15 0 2 0 1 diggainL-send diggainL-recv ............|............127%
+28 8 1 10 -3381 -262144 -1 8100 1;
+#X obj 134 -20 hsl 128 15 0 2 0 1 diggainR-send diggainR-recv ............|............70%
+28 8 1 10 -3381 -262144 -1 4500 1;
 #X text 115 -21 R;
 #X obj 11 -147 nbx 5 15 -1e+37 1e+37 0 0 empty ui-samplerate-recv samplerate
-0 -6 0 8 -233017 -33289 -1 1199.69 256;
+0 -6 0 8 -233017 -33289 -1 1202.3 256;
 #X obj 11 -115 nbx 5 15 -1e+37 1e+37 0 0 empty guirate guirate 0 -6
-0 8 -233017 -33289 -1 8 256;
+0 8 -233017 -33289 -1 79 256;
 #X text 8 -177 DEBUG;
 #X obj 134 14 hsl 128 10 1 5 0 1 stereomagn-send stereomagn-recv empty
--2 -8 0 10 -262144 -1 -1 1800 1;
+-2 -8 0 10 -262144 -1 -1 1700 1;
 #X floatatom 131 26 5 0 100 0 - - -;
 #X text 10 12 STEREO MAGNIFY (X);
 #X obj 339 -42 nbx 4 20 0.01 20 0 1 ampcurve-send ampcurve-recv empty
@@ -710,9 +710,9 @@ midinote 0 -8 0 10 -262144 -159808 -1 70.5574 256;
 #X obj 28 -260 vu 14 120 vusourcepre empty -1 -8 0 10 -66577 -262144
 1 0;
 #X obj 82 -237 vsl 30 50 -60 0 0 0 empty ui-inputknob-recv PED 0 -9
-0 9 -1 -258113 -1 4900 1;
+0 9 -1 -258113 -1 2427 1;
 #X obj 82 -184 nbx 3 14 -99 99 0 0 empty ui-inputknob-recv empty 0
--8 0 9 -99865 -262144 -1 0 256;
+-8 0 9 -99865 -262144 -1 -30.2832 256;
 #X obj 2 -114 cnv 15 400 76 empty empty empty 20 12 0 14 -162280 -66577
 0;
 #X obj 28 -91 hsl 128 9 0.01 1 1 0 _ vuanalogL empty -2 -8 0 10 -33289
@@ -720,7 +720,7 @@ midinote 0 -8 0 10 -262144 -159808 -1 70.5574 256;
 #X obj 28 -81 hsl 128 9 0.01 1 1 0 _ vuanalogR empty -2 -8 0 10 -33289
 -4034 -1 0 1;
 #X obj 249 -92 hsl 128 9 0.01 1 1 0 _ v0post empty -2 -8 0 10 -33289
--126974 -1 12700 1;
+-126974 -1 0 1;
 #X obj 249 -82 hsl 128 9 0.01 1 1 0 _ v1post empty -2 -8 0 10 -33289
 -126974 -1 0 1;
 #X text 243 -109 DIG;
@@ -730,7 +730,7 @@ midinote 0 -8 0 10 -262144 -159808 -1 70.5574 256;
 #X obj 25 -68 nbx 3 13 -48 48 0 1 gainanalog-send gainanalog-recv pregate(dB)
 0 20 1 10 -99865 -262144 -66577 0 256;
 #X obj 350 -69 nbx 3 13 -48 48 0 1 gaindigpost-send gaindigpost-recv
-postgate(dB) -25 20 1 10 -99865 -262144 -66577 12 256;
+postgate(dB) -25 20 1 10 -99865 -262144 -66577 10 256;
 #X obj 130 -68 nbx 3 13 -48 48 0 1 gainanalogpost-send gainanalogpost-recv
 postgate(dB) -25 20 1 10 -99865 -262144 -66577 12 256;
 #X obj 246 -69 nbx 3 13 -48 48 0 1 gaindigpre-send gaindigpre-recv
